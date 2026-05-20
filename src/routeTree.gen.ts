@@ -18,6 +18,7 @@ import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as PalestranteIdRouteImport } from './routes/palestrante.$id'
 import { Route as AppPropostasRouteImport } from './routes/app.propostas'
+import { Route as AppLogisticaRouteImport } from './routes/app.logistica'
 import { Route as AppKanbanRouteImport } from './routes/app.kanban'
 import { Route as AppJuridicoRouteImport } from './routes/app.juridico'
 import { Route as AppFinanceiroRouteImport } from './routes/app.financeiro'
@@ -69,6 +70,11 @@ const AppPropostasRoute = AppPropostasRouteImport.update({
   path: '/propostas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLogisticaRoute = AppLogisticaRouteImport.update({
+  id: '/logistica',
+  path: '/logistica',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppKanbanRoute = AppKanbanRouteImport.update({
   id: '/kanban',
   path: '/kanban',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
+  '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
+  '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app': typeof AppIndexRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
+  '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
+    | '/app/logistica'
     | '/app/propostas'
     | '/palestrante/$id'
     | '/app/'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
+    | '/app/logistica'
     | '/app/propostas'
     | '/palestrante/$id'
     | '/app'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
+    | '/app/logistica'
     | '/app/propostas'
     | '/palestrante/$id'
     | '/app/'
@@ -265,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPropostasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/logistica': {
+      id: '/app/logistica'
+      path: '/logistica'
+      fullPath: '/app/logistica'
+      preLoaderRoute: typeof AppLogisticaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/kanban': {
       id: '/app/kanban'
       path: '/kanban'
@@ -309,6 +328,7 @@ interface AppRouteChildren {
   AppFinanceiroRoute: typeof AppFinanceiroRoute
   AppJuridicoRoute: typeof AppJuridicoRoute
   AppKanbanRoute: typeof AppKanbanRoute
+  AppLogisticaRoute: typeof AppLogisticaRoute
   AppPropostasRoute: typeof AppPropostasRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -319,6 +339,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFinanceiroRoute: AppFinanceiroRoute,
   AppJuridicoRoute: AppJuridicoRoute,
   AppKanbanRoute: AppKanbanRoute,
+  AppLogisticaRoute: AppLogisticaRoute,
   AppPropostasRoute: AppPropostasRoute,
   AppIndexRoute: AppIndexRoute,
 }
@@ -347,3 +368,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
