@@ -9,9 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PortalRouteImport } from './routes/portal'
+import { Route as OrcamentoRouteImport } from './routes/orcamento'
+import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as PalestranteIdRouteImport } from './routes/palestrante.$id'
 import { Route as AppPropostasRouteImport } from './routes/app.propostas'
 import { Route as AppKanbanRouteImport } from './routes/app.kanban'
 import { Route as AppJuridicoRouteImport } from './routes/app.juridico'
@@ -19,6 +24,21 @@ import { Route as AppFinanceiroRouteImport } from './routes/app.financeiro'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrcamentoRoute = OrcamentoRouteImport.update({
+  id: '/orcamento',
+  path: '/orcamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogoRoute = CatalogoRouteImport.update({
+  id: '/catalogo',
+  path: '/catalogo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -29,10 +49,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalIndexRoute = PortalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalRoute,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const PalestranteIdRoute = PalestranteIdRouteImport.update({
+  id: '/palestrante/$id',
+  path: '/palestrante/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppPropostasRoute = AppPropostasRouteImport.update({
   id: '/propostas',
@@ -68,78 +98,131 @@ const AppAdminRoute = AppAdminRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/catalogo': typeof CatalogoRoute
+  '/orcamento': typeof OrcamentoRoute
+  '/portal': typeof PortalRouteWithChildren
   '/app/admin': typeof AppAdminRoute
   '/app/crm': typeof AppCrmRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
+  '/portal/': typeof PortalIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/catalogo': typeof CatalogoRoute
+  '/orcamento': typeof OrcamentoRoute
   '/app/admin': typeof AppAdminRoute
   '/app/crm': typeof AppCrmRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/palestrante/$id': typeof PalestranteIdRoute
   '/app': typeof AppIndexRoute
+  '/portal': typeof PortalIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/catalogo': typeof CatalogoRoute
+  '/orcamento': typeof OrcamentoRoute
+  '/portal': typeof PortalRouteWithChildren
   '/app/admin': typeof AppAdminRoute
   '/app/crm': typeof AppCrmRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
+  '/portal/': typeof PortalIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/app'
+    | '/catalogo'
+    | '/orcamento'
+    | '/portal'
     | '/app/admin'
     | '/app/crm'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
     | '/app/propostas'
+    | '/palestrante/$id'
     | '/app/'
+    | '/portal/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/catalogo'
+    | '/orcamento'
     | '/app/admin'
     | '/app/crm'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
     | '/app/propostas'
+    | '/palestrante/$id'
     | '/app'
+    | '/portal'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/catalogo'
+    | '/orcamento'
+    | '/portal'
     | '/app/admin'
     | '/app/crm'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
     | '/app/propostas'
+    | '/palestrante/$id'
     | '/app/'
+    | '/portal/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  CatalogoRoute: typeof CatalogoRoute
+  OrcamentoRoute: typeof OrcamentoRoute
+  PortalRoute: typeof PortalRouteWithChildren
+  PalestranteIdRoute: typeof PalestranteIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orcamento': {
+      id: '/orcamento'
+      path: '/orcamento'
+      fullPath: '/orcamento'
+      preLoaderRoute: typeof OrcamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalogo': {
+      id: '/catalogo'
+      path: '/catalogo'
+      fullPath: '/catalogo'
+      preLoaderRoute: typeof CatalogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -154,12 +237,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/': {
+      id: '/portal/'
+      path: '/'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof PortalIndexRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/app/': {
       id: '/app/'
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/palestrante/$id': {
+      id: '/palestrante/$id'
+      path: '/palestrante/$id'
+      fullPath: '/palestrante/$id'
+      preLoaderRoute: typeof PalestranteIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/propostas': {
       id: '/app/propostas'
@@ -228,10 +325,35 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface PortalRouteChildren {
+  PortalIndexRoute: typeof PortalIndexRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalIndexRoute: PortalIndexRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  CatalogoRoute: CatalogoRoute,
+  OrcamentoRoute: OrcamentoRoute,
+  PortalRoute: PortalRouteWithChildren,
+  PalestranteIdRoute: PalestranteIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
