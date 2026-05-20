@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as PalestranteIdRouteImport } from './routes/palestrante.$id'
+import { Route as AppVendasRouteImport } from './routes/app.vendas'
 import { Route as AppPropostasRouteImport } from './routes/app.propostas'
 import { Route as AppLogisticaRouteImport } from './routes/app.logistica'
 import { Route as AppKanbanRouteImport } from './routes/app.kanban'
@@ -66,6 +67,11 @@ const PalestranteIdRoute = PalestranteIdRouteImport.update({
   id: '/palestrante/$id',
   path: '/palestrante/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppVendasRoute = AppVendasRouteImport.update({
+  id: '/vendas',
+  path: '/vendas',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppPropostasRoute = AppPropostasRouteImport.update({
   id: '/propostas',
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/app/kanban': typeof AppKanbanRoute
   '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/app/kanban': typeof AppKanbanRoute
   '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app': typeof AppIndexRoute
   '/portal': typeof PortalIndexRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/app/kanban': typeof AppKanbanRoute
   '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/app/kanban'
     | '/app/logistica'
     | '/app/propostas'
+    | '/app/vendas'
     | '/palestrante/$id'
     | '/app/'
     | '/portal/'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/app/kanban'
     | '/app/logistica'
     | '/app/propostas'
+    | '/app/vendas'
     | '/palestrante/$id'
     | '/app'
     | '/portal'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/app/kanban'
     | '/app/logistica'
     | '/app/propostas'
+    | '/app/vendas'
     | '/palestrante/$id'
     | '/app/'
     | '/portal/'
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/palestrante/$id'
       preLoaderRoute: typeof PalestranteIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/vendas': {
+      id: '/app/vendas'
+      path: '/vendas'
+      fullPath: '/app/vendas'
+      preLoaderRoute: typeof AppVendasRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/propostas': {
       id: '/app/propostas'
@@ -370,6 +389,7 @@ interface AppRouteChildren {
   AppKanbanRoute: typeof AppKanbanRoute
   AppLogisticaRoute: typeof AppLogisticaRoute
   AppPropostasRoute: typeof AppPropostasRoute
+  AppVendasRoute: typeof AppVendasRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -383,6 +403,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppKanbanRoute: AppKanbanRoute,
   AppLogisticaRoute: AppLogisticaRoute,
   AppPropostasRoute: AppPropostasRoute,
+  AppVendasRoute: AppVendasRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
