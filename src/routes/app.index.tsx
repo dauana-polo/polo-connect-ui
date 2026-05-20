@@ -3,12 +3,13 @@ import { AppTopbar } from "@/components/AppSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { agendaEventos, formatBRL, kpis, palestrantes, receitaMensal } from "@/lib/mock-data";
+import { agendaEventos, dashboardExecutivo, formatBRL, kpis, palestrantes, receitaMensal } from "@/lib/mock-data";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  ArrowDownRight, ArrowUpRight, Calendar, DollarSign, MapPin, Star, Target, TrendingUp, Users,
+  ArrowDownRight, ArrowUpRight, Calendar, DollarSign, MapPin, Star, Target, TrendingUp,
+  Receipt, Wallet, FileSignature, Clock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
