@@ -9,10 +9,9 @@ import {
 } from "recharts";
 import { ArrowDownCircle, ArrowUpCircle, Building2, Wallet } from "lucide-react";
 
-export const Receita = createFileRoute("/app/financeiro")({
+export const Route = createFileRoute("/app/financeiro")({
   component: Financeiro,
 });
-export const Route = Receita;
 
 const statusCor: Record<string, string> = {
   pago: "bg-emerald-500",
