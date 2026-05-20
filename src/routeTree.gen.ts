@@ -17,11 +17,15 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as PalestranteIdRouteImport } from './routes/palestrante.$id'
+import { Route as AppVendasRouteImport } from './routes/app.vendas'
 import { Route as AppPropostasRouteImport } from './routes/app.propostas'
+import { Route as AppLogisticaRouteImport } from './routes/app.logistica'
 import { Route as AppKanbanRouteImport } from './routes/app.kanban'
 import { Route as AppJuridicoRouteImport } from './routes/app.juridico'
 import { Route as AppFinanceiroRouteImport } from './routes/app.financeiro'
+import { Route as AppEventosRouteImport } from './routes/app.eventos'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
+import { Route as AppClientesRouteImport } from './routes/app.clientes'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 
 const PortalRoute = PortalRouteImport.update({
@@ -64,9 +68,19 @@ const PalestranteIdRoute = PalestranteIdRouteImport.update({
   path: '/palestrante/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppVendasRoute = AppVendasRouteImport.update({
+  id: '/vendas',
+  path: '/vendas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPropostasRoute = AppPropostasRouteImport.update({
   id: '/propostas',
   path: '/propostas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLogisticaRoute = AppLogisticaRouteImport.update({
+  id: '/logistica',
+  path: '/logistica',
   getParentRoute: () => AppRoute,
 } as any)
 const AppKanbanRoute = AppKanbanRouteImport.update({
@@ -84,9 +98,19 @@ const AppFinanceiroRoute = AppFinanceiroRouteImport.update({
   path: '/financeiro',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEventosRoute = AppEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCrmRoute = AppCrmRouteImport.update({
   id: '/crm',
   path: '/crm',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClientesRoute = AppClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminRoute = AppAdminRouteImport.update({
@@ -102,11 +126,15 @@ export interface FileRoutesByFullPath {
   '/orcamento': typeof OrcamentoRoute
   '/portal': typeof PortalRouteWithChildren
   '/app/admin': typeof AppAdminRoute
+  '/app/clientes': typeof AppClientesRoute
   '/app/crm': typeof AppCrmRoute
+  '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
+  '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
@@ -116,11 +144,15 @@ export interface FileRoutesByTo {
   '/catalogo': typeof CatalogoRoute
   '/orcamento': typeof OrcamentoRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/clientes': typeof AppClientesRoute
   '/app/crm': typeof AppCrmRoute
+  '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
+  '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app': typeof AppIndexRoute
   '/portal': typeof PortalIndexRoute
@@ -133,11 +165,15 @@ export interface FileRoutesById {
   '/orcamento': typeof OrcamentoRoute
   '/portal': typeof PortalRouteWithChildren
   '/app/admin': typeof AppAdminRoute
+  '/app/clientes': typeof AppClientesRoute
   '/app/crm': typeof AppCrmRoute
+  '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
+  '/app/logistica': typeof AppLogisticaRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
@@ -151,11 +187,15 @@ export interface FileRouteTypes {
     | '/orcamento'
     | '/portal'
     | '/app/admin'
+    | '/app/clientes'
     | '/app/crm'
+    | '/app/eventos'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
+    | '/app/logistica'
     | '/app/propostas'
+    | '/app/vendas'
     | '/palestrante/$id'
     | '/app/'
     | '/portal/'
@@ -165,11 +205,15 @@ export interface FileRouteTypes {
     | '/catalogo'
     | '/orcamento'
     | '/app/admin'
+    | '/app/clientes'
     | '/app/crm'
+    | '/app/eventos'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
+    | '/app/logistica'
     | '/app/propostas'
+    | '/app/vendas'
     | '/palestrante/$id'
     | '/app'
     | '/portal'
@@ -181,11 +225,15 @@ export interface FileRouteTypes {
     | '/orcamento'
     | '/portal'
     | '/app/admin'
+    | '/app/clientes'
     | '/app/crm'
+    | '/app/eventos'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
+    | '/app/logistica'
     | '/app/propostas'
+    | '/app/vendas'
     | '/palestrante/$id'
     | '/app/'
     | '/portal/'
@@ -258,11 +306,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PalestranteIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/vendas': {
+      id: '/app/vendas'
+      path: '/vendas'
+      fullPath: '/app/vendas'
+      preLoaderRoute: typeof AppVendasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/propostas': {
       id: '/app/propostas'
       path: '/propostas'
       fullPath: '/app/propostas'
       preLoaderRoute: typeof AppPropostasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/logistica': {
+      id: '/app/logistica'
+      path: '/logistica'
+      fullPath: '/app/logistica'
+      preLoaderRoute: typeof AppLogisticaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/kanban': {
@@ -286,11 +348,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFinanceiroRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/eventos': {
+      id: '/app/eventos'
+      path: '/eventos'
+      fullPath: '/app/eventos'
+      preLoaderRoute: typeof AppEventosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/crm': {
       id: '/app/crm'
       path: '/crm'
       fullPath: '/app/crm'
       preLoaderRoute: typeof AppCrmRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/clientes': {
+      id: '/app/clientes'
+      path: '/clientes'
+      fullPath: '/app/clientes'
+      preLoaderRoute: typeof AppClientesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/admin': {
@@ -305,21 +381,29 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
+  AppClientesRoute: typeof AppClientesRoute
   AppCrmRoute: typeof AppCrmRoute
+  AppEventosRoute: typeof AppEventosRoute
   AppFinanceiroRoute: typeof AppFinanceiroRoute
   AppJuridicoRoute: typeof AppJuridicoRoute
   AppKanbanRoute: typeof AppKanbanRoute
+  AppLogisticaRoute: typeof AppLogisticaRoute
   AppPropostasRoute: typeof AppPropostasRoute
+  AppVendasRoute: typeof AppVendasRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
+  AppClientesRoute: AppClientesRoute,
   AppCrmRoute: AppCrmRoute,
+  AppEventosRoute: AppEventosRoute,
   AppFinanceiroRoute: AppFinanceiroRoute,
   AppJuridicoRoute: AppJuridicoRoute,
   AppKanbanRoute: AppKanbanRoute,
+  AppLogisticaRoute: AppLogisticaRoute,
   AppPropostasRoute: AppPropostasRoute,
+  AppVendasRoute: AppVendasRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

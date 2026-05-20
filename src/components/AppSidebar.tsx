@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, FileText, Kanban, DollarSign, Scale,
   Settings, Mic2, Search, Bell, ChevronDown, Sparkles,
+  Plane, ClipboardCheck, Building2, TrendingUp,
 } from "lucide-react";
 
 const nav = [
@@ -9,9 +10,13 @@ const nav = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
     { to: "/app/crm", label: "CRM Comercial", icon: Users },
     { to: "/app/propostas", label: "Propostas", icon: FileText },
+    { to: "/app/vendas", label: "Vendas", icon: TrendingUp },
     { to: "/app/kanban", label: "Kanban Multi", icon: Kanban },
   ]},
   { group: "Operação", items: [
+    { to: "/app/clientes", label: "Clientes 360°", icon: Building2 },
+    { to: "/app/logistica", label: "Logística", icon: Plane },
+    { to: "/app/eventos", label: "Eventos & NPS", icon: ClipboardCheck },
     { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
     { to: "/app/juridico", label: "Jurídico", icon: Scale },
   ]},

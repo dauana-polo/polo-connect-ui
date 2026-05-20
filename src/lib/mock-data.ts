@@ -109,3 +109,177 @@ export const interacoes = [
 
 export const formatBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
+export const logistica = [
+  {
+    id: "lg1", evento: "Convenção Itaú", cliente: "Itaú", palestrante: "Dr. Ricardo Almeida",
+    data: "22/05/2025", cidade: "São Paulo, SP", status: "concluido",
+    voo: { cia: "LATAM", numero: "LA3287", origem: "GRU", destino: "CGH", partida: "22/05 07:30", chegada: "22/05 08:25", localizador: "X7K9P2" },
+    transferIda: "Motorista Carlos - 06:00 (Toyota Corolla ABC1D23)",
+    transferVolta: "Uber Black - 14:00",
+    hotel: { nome: "Tivoli Mofarrej", checkin: "21/05 18:00", checkout: "22/05 12:00", reserva: "TVL-88421", quarto: "Executive Suite 1208" },
+    checklist: [
+      { item: "Passagem aérea emitida", ok: true },
+      { item: "Hotel reservado", ok: true },
+      { item: "Transfer aeroporto contratado", ok: true },
+      { item: "Briefing enviado ao palestrante", ok: true },
+      { item: "Confirmação 24h antes", ok: true },
+    ],
+  },
+  {
+    id: "lg2", evento: "Workshop Vale", cliente: "Vale S.A.", palestrante: "Carlos Mendes",
+    data: "24/05/2025", cidade: "Belo Horizonte, MG", status: "confirmado",
+    voo: { cia: "GOL", numero: "G31482", origem: "GRU", destino: "CNF", partida: "24/05 06:15", chegada: "24/05 07:35", localizador: "M3P8Q1" },
+    transferIda: "Localiza Premium - 05:00 (BMW 320i XYZ4E56)",
+    transferVolta: "Motorista Vale - 17:30",
+    hotel: { nome: "Ouro Minas Palace", checkin: "23/05 20:00", checkout: "24/05 12:00", reserva: "OM-77231", quarto: "Suite Master 1502" },
+    checklist: [
+      { item: "Passagem aérea emitida", ok: true },
+      { item: "Hotel reservado", ok: true },
+      { item: "Transfer aeroporto contratado", ok: true },
+      { item: "Briefing enviado ao palestrante", ok: true },
+      { item: "Confirmação 24h antes", ok: false },
+    ],
+  },
+  {
+    id: "lg3", evento: "Treinamento Magalu", cliente: "Magazine Luiza", palestrante: "Mariana Costa",
+    data: "27/05/2025", cidade: "Franca, SP", status: "comprado",
+    voo: { cia: "Azul", numero: "AD4521", origem: "VCP", destino: "RAO", partida: "27/05 08:00", chegada: "27/05 09:10", localizador: "K2L5N9" },
+    transferIda: "A definir",
+    transferVolta: "A definir",
+    hotel: { nome: "IBIS Franca", checkin: "26/05 19:00", checkout: "27/05 14:00", reserva: "IBS-44128", quarto: "Standard 412" },
+    checklist: [
+      { item: "Passagem aérea emitida", ok: true },
+      { item: "Hotel reservado", ok: true },
+      { item: "Transfer aeroporto contratado", ok: false },
+      { item: "Briefing enviado ao palestrante", ok: false },
+      { item: "Confirmação 24h antes", ok: false },
+    ],
+  },
+  {
+    id: "lg4", evento: "Diversidade Natura", cliente: "Natura", palestrante: "Juliana Rocha",
+    data: "30/05/2025", cidade: "Cajamar, SP", status: "aguardando",
+    voo: { cia: "—", numero: "Evento local (sem voo)", origem: "—", destino: "—", partida: "—", chegada: "—", localizador: "—" },
+    transferIda: "Carro Polo - 07:00",
+    transferVolta: "Carro Polo - 13:00",
+    hotel: { nome: "Sem hospedagem (bate-volta)", checkin: "—", checkout: "—", reserva: "—", quarto: "—" },
+    checklist: [
+      { item: "Roteiro confirmado", ok: false },
+      { item: "Transfer contratado", ok: true },
+      { item: "Briefing enviado", ok: false },
+      { item: "Confirmação 24h antes", ok: false },
+    ],
+  },
+  {
+    id: "lg5", evento: "Sales Day Stone", cliente: "Stone", palestrante: "Felipe Toledo",
+    data: "02/06/2025", cidade: "Rio de Janeiro, RJ", status: "aguardando",
+    voo: { cia: "—", numero: "Pendente compra", origem: "GRU", destino: "SDU", partida: "—", chegada: "—", localizador: "—" },
+    transferIda: "Pendente", transferVolta: "Pendente",
+    hotel: { nome: "Belmond Copacabana Palace", checkin: "01/06 18:00", checkout: "02/06 13:00", reserva: "Pendente", quarto: "Deluxe Ocean View" },
+    checklist: [
+      { item: "Passagem aérea emitida", ok: false },
+      { item: "Hotel reservado", ok: false },
+      { item: "Transfer contratado", ok: false },
+      { item: "Briefing enviado", ok: false },
+    ],
+  },
+];
+
+export const npsRespostas = [
+  { id: "n1", palestrante: "Dr. Ricardo Almeida", cliente: "Itaú", evento: "Convenção Top Performers", nota: 10, comentario: "Palestra excepcional, conteúdo aplicável e altíssima energia. Já estamos planejando o próximo!", data: "21/05/2025" },
+  { id: "n2", palestrante: "Juliana Rocha", cliente: "Natura", evento: "Diversidade & Cultura", nota: 9, comentario: "Conteúdo profundo e provocador. Time saiu inspirado.", data: "19/05/2025" },
+  { id: "n3", palestrante: "Mariana Costa", cliente: "Magazine Luiza", evento: "Treinamento Liderança", nota: 10, comentario: "Marina foi cirúrgica. Cases reais que dialogam com a operação.", data: "18/05/2025" },
+  { id: "n4", palestrante: "Felipe Toledo", cliente: "Ambev", evento: "Kickoff Comercial", nota: 8, comentario: "Muito bom, faltou pouco tempo para QA.", data: "15/05/2025" },
+  { id: "n5", palestrante: "Carlos Mendes", cliente: "Vale", evento: "Workshop Inovação", nota: 10, comentario: "Conexão imediata com a liderança técnica.", data: "12/05/2025" },
+  { id: "n6", palestrante: "Beatriz Lima", cliente: "B3", evento: "Encontro Investidores", nota: 9, comentario: "Leitura de cenário precisa e didática.", data: "08/05/2025" },
+];
+
+export const clientes = [
+  {
+    id: "cl1", nome: "Itaú Unibanco", segmento: "Financeiro", cnpj: "60.701.190/0001-04",
+    contato: "Renata Mello", cargo: "Head de RH", email: "renata.mello@itau.com", telefone: "(11) 98123-4521",
+    ltv: 285000, eventos: 6, propostas: 9, nps: 9.7, status: "ativo",
+    timeline: [
+      { data: "21/05/2025", tipo: "evento", titulo: "Convenção Top Performers realizada", autor: "Sistema" },
+      { data: "15/05/2025", tipo: "pagamento", titulo: "Recebimento R$ 17.500 (1/2)", autor: "Camila Ferreira" },
+      { data: "10/05/2025", tipo: "contrato", titulo: "Contrato CT-2025-098 assinado", autor: "Jurídico" },
+      { data: "02/05/2025", tipo: "proposta", titulo: "Proposta PROP-2025-0131 aprovada", autor: "Lucas Martins" },
+      { data: "28/04/2025", tipo: "reuniao", titulo: "Reunião briefing realizada", autor: "Ana Silva" },
+      { data: "20/04/2025", tipo: "lead", titulo: "Lead criado no CRM", autor: "Ana Silva" },
+    ],
+  },
+  {
+    id: "cl2", nome: "Natura &Co", segmento: "Cosméticos", cnpj: "71.673.990/0001-77",
+    contato: "Bruno Tavares", cargo: "Diretor de Pessoas", email: "bruno.tavares@natura.com", telefone: "(11) 99432-1180",
+    ltv: 142000, eventos: 4, propostas: 5, nps: 9.4, status: "ativo",
+    timeline: [
+      { data: "19/05/2025", tipo: "evento", titulo: "Evento Diversidade & Cultura realizado", autor: "Sistema" },
+      { data: "12/05/2025", tipo: "contrato", titulo: "Contrato CT-2025-097 assinado", autor: "Jurídico" },
+      { data: "05/05/2025", tipo: "proposta", titulo: "Proposta aprovada", autor: "Ana Silva" },
+    ],
+  },
+  {
+    id: "cl3", nome: "Vale S.A.", segmento: "Mineração", cnpj: "33.592.510/0001-54",
+    contato: "Eduardo Pacheco", cargo: "VP de Operações", email: "eduardo.pacheco@vale.com", telefone: "(31) 98821-7755",
+    ltv: 198000, eventos: 3, propostas: 6, nps: 9.8, status: "ativo",
+    timeline: [
+      { data: "15/05/2025", tipo: "contrato", titulo: "Contrato CT-2025-096 enviado", autor: "Jurídico" },
+      { data: "08/05/2025", tipo: "proposta", titulo: "Proposta PROP-2025-0140 em rascunho", autor: "Pedro Souza" },
+    ],
+  },
+  {
+    id: "cl4", nome: "Magazine Luiza", segmento: "Varejo", cnpj: "47.960.950/0001-21",
+    contato: "Patrícia Lemos", cargo: "Gerente de Treinamento", email: "patricia@magalu.com", telefone: "(11) 97712-3399",
+    ltv: 96000, eventos: 3, propostas: 4, nps: 9.5, status: "ativo",
+    timeline: [
+      { data: "10/05/2025", tipo: "proposta", titulo: "Proposta PROP-2025-0141 aprovada", autor: "Lucas Martins" },
+    ],
+  },
+];
+
+export const empresas = [
+  { id: "polo", nome: "Polo Palestrantes", regime: "Lucro Presumido", iss: 5, irrf: 1.5, pis: 0.65, cofins: 3.0, csll: 1.0 },
+  { id: "penna", nome: "Penna Talks", regime: "Simples Nacional", iss: 2, irrf: 0, pis: 0, cofins: 0, csll: 0, das: 6.0 },
+  { id: "talks", nome: "Talks Eventos", regime: "Simples Nacional", iss: 2, irrf: 0, pis: 0, cofins: 0, csll: 0, das: 6.0 },
+];
+
+export const vendas = [
+  { id: "v1", numero: "VND-2025-098", cliente: "Itaú", palestrante: "Dr. Ricardo Almeida", empresa: "polo", bruto: 35000, cache: 24500, data: "20/05/2025", consultor: "Lucas Martins" },
+  { id: "v2", numero: "VND-2025-097", cliente: "Natura", palestrante: "Juliana Rocha", empresa: "penna", bruto: 22000, cache: 15400, data: "18/05/2025", consultor: "Ana Silva" },
+  { id: "v3", numero: "VND-2025-096", cliente: "Vale", palestrante: "Carlos Mendes", empresa: "polo", bruto: 45000, cache: 31500, data: "15/05/2025", consultor: "Pedro Souza" },
+  { id: "v4", numero: "VND-2025-095", cliente: "Magazine Luiza", palestrante: "Mariana Costa", empresa: "talks", bruto: 28000, cache: 19600, data: "10/05/2025", consultor: "Lucas Martins" },
+  { id: "v5", numero: "VND-2025-094", cliente: "B3", palestrante: "Beatriz Lima", empresa: "polo", bruto: 32000, cache: 22400, data: "08/05/2025", consultor: "Pedro Souza" },
+  { id: "v6", numero: "VND-2025-093", cliente: "Ambev", palestrante: "Felipe Toledo", empresa: "penna", bruto: 18000, cache: 12600, data: "05/05/2025", consultor: "Ana Silva" },
+];
+
+export function calcularVenda(bruto: number, cache: number, empresaId: string) {
+  const e = empresas.find((x) => x.id === empresaId)!;
+  let impostos = 0;
+  const detalhes: { label: string; valor: number; pct: number }[] = [];
+  if (e.regime === "Simples Nacional") {
+    const das = (bruto * (e.das ?? 6)) / 100;
+    impostos += das;
+    detalhes.push({ label: "DAS Simples", valor: das, pct: e.das ?? 6 });
+    const iss = (bruto * e.iss) / 100;
+    impostos += iss;
+    detalhes.push({ label: "ISS", valor: iss, pct: e.iss });
+  } else {
+    const iss = (bruto * e.iss) / 100;
+    const pis = (bruto * e.pis) / 100;
+    const cofins = (bruto * e.cofins) / 100;
+    const irrf = (bruto * e.irrf) / 100;
+    const csll = (bruto * e.csll) / 100;
+    impostos = iss + pis + cofins + irrf + csll;
+    detalhes.push(
+      { label: "ISS", valor: iss, pct: e.iss },
+      { label: "PIS", valor: pis, pct: e.pis },
+      { label: "COFINS", valor: cofins, pct: e.cofins },
+      { label: "IRRF", valor: irrf, pct: e.irrf },
+      { label: "CSLL", valor: csll, pct: e.csll },
+    );
+  }
+  const liquido = bruto - impostos;
+  const comissao = bruto * 0.05;
+  const margem = liquido - cache - comissao;
+  return { impostos, detalhes, liquido, comissao, margem, cache };
+}
