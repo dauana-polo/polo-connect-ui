@@ -40,16 +40,25 @@ function KpiCard({ label, value, delta, icon: Icon, accent }: any) {
 }
 
 function Dashboard() {
+  const exec = dashboardExecutivo();
   return (
     <>
       <AppTopbar title="Dashboard Executivo" breadcrumb={["Home", "Dashboard"]} />
       <div className="p-6 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <KpiCard label="Receita Mensal" value={formatBRL(kpis.receita)} delta={kpis.receitaDelta} icon={DollarSign} accent="bg-gradient-to-br from-emerald-500 to-emerald-600" />
-          <KpiCard label="Eventos do mês" value={kpis.eventos} delta={kpis.eventosDelta} icon={Calendar} accent="bg-gradient-to-br from-violet-500 to-fuchsia-500" />
-          <KpiCard label="Leads ativos" value={kpis.leads} delta={kpis.leadsDelta} icon={Target} accent="bg-gradient-to-br from-blue-500 to-cyan-500" />
-          <KpiCard label="Vendas fechadas" value={kpis.vendas} delta={kpis.vendasDelta} icon={TrendingUp} accent="bg-gradient-to-br from-amber-500 to-orange-500" />
+          <KpiCard label="Faturamento mês" value={formatBRL(exec.faturamento)} delta={kpis.receitaDelta} icon={DollarSign} accent="bg-gradient-to-br from-emerald-500 to-emerald-600" />
+          <KpiCard label="Lucro líquido" value={formatBRL(exec.lucroLiquido)} delta={18.2} icon={TrendingUp} accent="bg-gradient-to-br from-violet-500 to-fuchsia-500" />
+          <KpiCard label="Impostos retidos" value={formatBRL(exec.impostos)} delta={-2.4} icon={Receipt} accent="bg-gradient-to-br from-rose-500 to-rose-600" />
+          <KpiCard label="Comissões a pagar" value={formatBRL(exec.comissoes)} delta={kpis.vendasDelta} icon={Wallet} accent="bg-gradient-to-br from-amber-500 to-orange-500" />
         </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <MiniKpi label="Vendas do mês" value={exec.vendasMes} icon={TrendingUp} />
+          <MiniKpi label="Eventos futuros" value={exec.eventosFuturos} icon={Calendar} />
+          <MiniKpi label="Contratos pendentes" value={exec.contratosPendentes} icon={FileSignature} />
+          <MiniKpi label="Recebimentos pendentes" value={formatBRL(exec.recebimentosPendentes)} icon={Clock} />
+        </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
