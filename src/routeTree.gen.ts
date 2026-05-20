@@ -22,6 +22,7 @@ import { Route as AppLogisticaRouteImport } from './routes/app.logistica'
 import { Route as AppKanbanRouteImport } from './routes/app.kanban'
 import { Route as AppJuridicoRouteImport } from './routes/app.juridico'
 import { Route as AppFinanceiroRouteImport } from './routes/app.financeiro'
+import { Route as AppEventosRouteImport } from './routes/app.eventos'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 
@@ -90,6 +91,11 @@ const AppFinanceiroRoute = AppFinanceiroRouteImport.update({
   path: '/financeiro',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEventosRoute = AppEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCrmRoute = AppCrmRouteImport.update({
   id: '/crm',
   path: '/crm',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/portal': typeof PortalRouteWithChildren
   '/app/admin': typeof AppAdminRoute
   '/app/crm': typeof AppCrmRoute
+  '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/orcamento': typeof OrcamentoRoute
   '/app/admin': typeof AppAdminRoute
   '/app/crm': typeof AppCrmRoute
+  '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/portal': typeof PortalRouteWithChildren
   '/app/admin': typeof AppAdminRoute
   '/app/crm': typeof AppCrmRoute
+  '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
   '/app/juridico': typeof AppJuridicoRoute
   '/app/kanban': typeof AppKanbanRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/app/admin'
     | '/app/crm'
+    | '/app/eventos'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/orcamento'
     | '/app/admin'
     | '/app/crm'
+    | '/app/eventos'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/app/admin'
     | '/app/crm'
+    | '/app/eventos'
     | '/app/financeiro'
     | '/app/juridico'
     | '/app/kanban'
@@ -305,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFinanceiroRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/eventos': {
+      id: '/app/eventos'
+      path: '/eventos'
+      fullPath: '/app/eventos'
+      preLoaderRoute: typeof AppEventosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/crm': {
       id: '/app/crm'
       path: '/crm'
@@ -325,6 +344,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppCrmRoute: typeof AppCrmRoute
+  AppEventosRoute: typeof AppEventosRoute
   AppFinanceiroRoute: typeof AppFinanceiroRoute
   AppJuridicoRoute: typeof AppJuridicoRoute
   AppKanbanRoute: typeof AppKanbanRoute
@@ -336,6 +356,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppCrmRoute: AppCrmRoute,
+  AppEventosRoute: AppEventosRoute,
   AppFinanceiroRoute: AppFinanceiroRoute,
   AppJuridicoRoute: AppJuridicoRoute,
   AppKanbanRoute: AppKanbanRoute,
