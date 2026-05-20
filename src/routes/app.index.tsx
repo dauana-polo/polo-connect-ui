@@ -39,6 +39,20 @@ function KpiCard({ label, value, delta, icon: Icon, accent }: any) {
   );
 }
 
+function MiniKpi({ label, value, icon: Icon }: any) {
+  return (
+    <Card>
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className="h-9 w-9 rounded-md bg-muted grid place-items-center"><Icon className="h-4 w-4 text-muted-foreground" /></div>
+        <div>
+          <div className="text-[11px] uppercase text-muted-foreground font-medium">{label}</div>
+          <div className="text-lg font-bold">{value}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function Dashboard() {
   const exec = dashboardExecutivo();
   return (
