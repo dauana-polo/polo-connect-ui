@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, FileText, Kanban, DollarSign, Scale,
   Settings, Mic2, Search, Bell, ChevronDown, Sparkles,
-  Plane, ClipboardCheck, Building2, TrendingUp,
+  Plane, ClipboardCheck, Building2, TrendingUp, UserCog, Wallet, PieChart,
 } from "lucide-react";
 
 const nav = [
@@ -13,12 +13,19 @@ const nav = [
     { to: "/app/vendas", label: "Vendas", icon: TrendingUp },
     { to: "/app/kanban", label: "Kanban Multi", icon: Kanban },
   ]},
-  { group: "Operação", items: [
+  { group: "Cadastros", items: [
     { to: "/app/clientes", label: "Clientes 360°", icon: Building2 },
+    { to: "/app/palestrantes", label: "Palestrantes", icon: UserCog },
+  ]},
+  { group: "Operação", items: [
     { to: "/app/logistica", label: "Logística", icon: Plane },
     { to: "/app/eventos", label: "Eventos & NPS", icon: ClipboardCheck },
-    { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
     { to: "/app/juridico", label: "Jurídico", icon: Scale },
+  ]},
+  { group: "Financeiro", items: [
+    { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
+    { to: "/app/comissoes", label: "Comissões", icon: Wallet },
+    { to: "/app/prebalanco", label: "Pré-Balanço", icon: PieChart },
   ]},
   { group: "Sistema", items: [
     { to: "/app/admin", label: "Administração", icon: Settings },
@@ -43,7 +50,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {nav.map((g) => (
           <div key={g.group}>
             <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
