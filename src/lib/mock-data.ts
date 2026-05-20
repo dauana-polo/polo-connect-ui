@@ -283,3 +283,208 @@ export function calcularVenda(bruto: number, cache: number, empresaId: string) {
   const margem = liquido - cache - comissao;
   return { impostos, detalhes, liquido, comissao, margem, cache };
 }
+
+// ============= COLABORADORES & COMISSÕES INTERNAS =============
+export const colaboradores = [
+  { id: "co1", nome: "Ana Silva",       cargo: "Consultor Comercial", area: "Comercial", foto: "https://i.pravatar.cc/100?img=20", pctVenda: 5.0 },
+  { id: "co2", nome: "Pedro Souza",     cargo: "Consultor Comercial", area: "Comercial", foto: "https://i.pravatar.cc/100?img=14", pctVenda: 5.0 },
+  { id: "co3", nome: "Lucas Martins",   cargo: "Gerente Comercial",   area: "Comercial", foto: "https://i.pravatar.cc/100?img=33", pctVenda: 2.0 },
+  { id: "co4", nome: "Marina Alves",    cargo: "Curadoria",           area: "Curadoria", foto: "https://i.pravatar.cc/100?img=49", pctVenda: 1.5 },
+  { id: "co5", nome: "Camila Ferreira", cargo: "Customer Success",    area: "CS",        foto: "https://i.pravatar.cc/100?img=44", pctVenda: 1.0 },
+  { id: "co6", nome: "Tiago Ramos",     cargo: "Suporte Operacional", area: "Suporte",   foto: "https://i.pravatar.cc/100?img=7",  pctVenda: 0.5 },
+  { id: "co7", nome: "Roberto Dias",    cargo: "Diretor Geral",       area: "Diretoria", foto: "https://i.pravatar.cc/100?img=5",  pctVenda: 1.0 },
+];
+
+// venda -> participantes (consultor, curador, CS, suporte, gestor)
+export const comissoesVenda: Record<string, { colaboradorId: string; papel: string; pct: number }[]> = {
+  v1: [
+    { colaboradorId: "co3", papel: "Consultor", pct: 5.0 },
+    { colaboradorId: "co4", papel: "Curador",   pct: 1.5 },
+    { colaboradorId: "co5", papel: "CS",        pct: 1.0 },
+    { colaboradorId: "co7", papel: "Gestor",    pct: 1.0 },
+  ],
+  v2: [
+    { colaboradorId: "co1", papel: "Consultor", pct: 5.0 },
+    { colaboradorId: "co4", papel: "Curador",   pct: 1.5 },
+    { colaboradorId: "co6", papel: "Suporte",   pct: 0.5 },
+  ],
+  v3: [
+    { colaboradorId: "co2", papel: "Consultor", pct: 5.0 },
+    { colaboradorId: "co3", papel: "Gestor",    pct: 2.0 },
+    { colaboradorId: "co4", papel: "Curador",   pct: 1.5 },
+    { colaboradorId: "co5", papel: "CS",        pct: 1.0 },
+  ],
+  v4: [
+    { colaboradorId: "co3", papel: "Consultor", pct: 5.0 },
+    { colaboradorId: "co5", papel: "CS",        pct: 1.0 },
+  ],
+  v5: [
+    { colaboradorId: "co2", papel: "Consultor", pct: 5.0 },
+    { colaboradorId: "co4", papel: "Curador",   pct: 1.5 },
+  ],
+  v6: [
+    { colaboradorId: "co1", papel: "Consultor", pct: 5.0 },
+    { colaboradorId: "co6", papel: "Suporte",   pct: 0.5 },
+  ],
+};
+
+export function comissoesPorColaborador() {
+  const map: Record<string, { bruto: number; liquido: number; vendas: number }> = {};
+  for (const c of colaboradores) map[c.id] = { bruto: 0, liquido: 0, vendas: 0 };
+  for (const v of vendas) {
+    const parts = comissoesVenda[v.id] ?? [];
+    for (const p of parts) {
+      const bruto = (v.bruto * p.pct) / 100;
+      const liquido = bruto * 0.875; // - IRRF/INSS estimado
+      map[p.colaboradorId].bruto += bruto;
+      map[p.colaboradorId].liquido += liquido;
+      map[p.colaboradorId].vendas += 1;
+    }
+  }
+  return map;
+}
+
+// ============= PALESTRANTES — DADOS COMPLETOS =============
+export const palestrantesDetalhe: Record<string, {
+  fiscal: { tipo: "PF" | "PJ"; documento: string; razaoSocial?: string; nomeFantasia?: string; inscricaoMunicipal?: string; regime?: string };
+  endereco: { cep: string; rua: string; numero: string; bairro: string; cidade: string; estado: string };
+  banco: { banco: string; agencia: string; conta: string; pix: string; favorecido: string };
+  operacional: { cachePadrao: number; exigencias: string[]; restricoes: string[]; acompanhantes: number; tecnicas: string[] };
+  comercial: { exclusivo: boolean; valorMedio: number; perfil: string };
+}> = {
+  "1": {
+    fiscal: { tipo: "PJ", documento: "27.554.108/0001-22", razaoSocial: "RA Consultoria & Palestras LTDA", nomeFantasia: "Ricardo Almeida", inscricaoMunicipal: "1.823.441-2", regime: "Lucro Presumido" },
+    endereco: { cep: "01452-002", rua: "Av. Brigadeiro Faria Lima", numero: "3477", bairro: "Itaim Bibi", cidade: "São Paulo", estado: "SP" },
+    banco: { banco: "Itaú (341)", agencia: "0341", conta: "12345-6", pix: "27554108000122", favorecido: "RA Consultoria LTDA" },
+    operacional: { cachePadrao: 35000, exigencias: ["Camarim privativo", "Água sem gás", "Frutas"], restricoes: ["Sem lactose"], acompanhantes: 1, tecnicas: ["Microfone lapela", "Clicker", "Monitor confidence"] },
+    comercial: { exclusivo: true, valorMedio: 35000, perfil: "Executivo sênior — keynote estratégica" },
+  },
+  "2": {
+    fiscal: { tipo: "PJ", documento: "31.882.770/0001-90", razaoSocial: "MC Marketing LTDA", nomeFantasia: "Mariana Costa", inscricaoMunicipal: "2.114.882-0", regime: "Simples Nacional" },
+    endereco: { cep: "04543-000", rua: "Rua Olimpíadas", numero: "100", bairro: "Vila Olímpia", cidade: "São Paulo", estado: "SP" },
+    banco: { banco: "Nubank (260)", agencia: "0001", conta: "98765-4", pix: "mariana@costa.com", favorecido: "MC Marketing LTDA" },
+    operacional: { cachePadrao: 28000, exigencias: ["Camarim com espelho"], restricoes: ["Vegetariana"], acompanhantes: 0, tecnicas: ["Headset", "Slides em 16:9"] },
+    comercial: { exclusivo: false, valorMedio: 28000, perfil: "Marketing & growth — corporativo" },
+  },
+  "3": {
+    fiscal: { tipo: "PJ", documento: "44.221.998/0001-11", razaoSocial: "Mendes AI Research LTDA", nomeFantasia: "Carlos Mendes", inscricaoMunicipal: "3.991.221-7", regime: "Lucro Presumido" },
+    endereco: { cep: "22640-100", rua: "Av. das Américas", numero: "500", bairro: "Barra da Tijuca", cidade: "Rio de Janeiro", estado: "RJ" },
+    banco: { banco: "Bradesco (237)", agencia: "1234", conta: "55555-0", pix: "44221998000111", favorecido: "Mendes AI Research LTDA" },
+    operacional: { cachePadrao: 45000, exigencias: ["Internet dedicada 100mb"], restricoes: [], acompanhantes: 2, tecnicas: ["HDMI 2.1", "Apresentação live demo"] },
+    comercial: { exclusivo: true, valorMedio: 45000, perfil: "Tech keynote — IA aplicada" },
+  },
+  "4": {
+    fiscal: { tipo: "PF", documento: "318.442.110-09" },
+    endereco: { cep: "05409-002", rua: "Rua Cardeal Arcoverde", numero: "1234", bairro: "Pinheiros", cidade: "São Paulo", estado: "SP" },
+    banco: { banco: "Inter (077)", agencia: "0001", conta: "22222-1", pix: "318.442.110-09", favorecido: "Juliana Rocha" },
+    operacional: { cachePadrao: 22000, exigencias: ["Camarim sem perfumes"], restricoes: ["Vegana"], acompanhantes: 0, tecnicas: ["Microfone headset"] },
+    comercial: { exclusivo: false, valorMedio: 22000, perfil: "Diversidade & cultura organizacional" },
+  },
+  "5": {
+    fiscal: { tipo: "PJ", documento: "55.110.220/0001-44", razaoSocial: "FT Performance LTDA", nomeFantasia: "Felipe Toledo", inscricaoMunicipal: "4.221.998-1", regime: "Simples Nacional" },
+    endereco: { cep: "30130-100", rua: "Av. Afonso Pena", numero: "1500", bairro: "Centro", cidade: "Belo Horizonte", estado: "MG" },
+    banco: { banco: "BB (001)", agencia: "3001", conta: "10101-1", pix: "felipe@toledo.com.br", favorecido: "FT Performance LTDA" },
+    operacional: { cachePadrao: 18000, exigencias: ["Espaço para dinâmica em pé"], restricoes: [], acompanhantes: 1, tecnicas: ["Microfone headset", "Som ambiente"] },
+    comercial: { exclusivo: false, valorMedio: 18000, perfil: "Alta performance & mentalidade" },
+  },
+  "6": {
+    fiscal: { tipo: "PJ", documento: "61.882.770/0001-33", razaoSocial: "BL Economia LTDA", nomeFantasia: "Beatriz Lima", inscricaoMunicipal: "5.001.882-5", regime: "Lucro Presumido" },
+    endereco: { cep: "01310-100", rua: "Av. Paulista", numero: "1000", bairro: "Bela Vista", cidade: "São Paulo", estado: "SP" },
+    banco: { banco: "Santander (033)", agencia: "0033", conta: "77777-7", pix: "61882770000133", favorecido: "BL Economia LTDA" },
+    operacional: { cachePadrao: 32000, exigencias: ["Atril"], restricoes: [], acompanhantes: 0, tecnicas: ["Microfone lapela", "Monitor"] },
+    comercial: { exclusivo: false, valorMedio: 32000, perfil: "Economia, finanças e cenário macro" },
+  },
+};
+
+// ============= CLIENTES — CONTATOS / DOCS =============
+export const clienteContatos: Record<string, { nome: string; cargo: string; tipo: "Financeiro" | "Jurídico" | "Operacional" | "Comercial"; email: string; telefone: string }[]> = {
+  cl1: [
+    { nome: "Renata Mello",   cargo: "Head de RH",        tipo: "Comercial",   email: "renata.mello@itau.com",   telefone: "(11) 98123-4521" },
+    { nome: "Eduardo Salles", cargo: "Contas a Pagar",    tipo: "Financeiro",  email: "ap@itau.com",             telefone: "(11) 3333-1010" },
+    { nome: "Dra. Helena P.", cargo: "Jurídico Corporativo", tipo: "Jurídico", email: "juridico@itau.com",       telefone: "(11) 3333-1020" },
+    { nome: "Marcos Aguiar",  cargo: "Eventos Corp.",     tipo: "Operacional", email: "eventos@itau.com",        telefone: "(11) 98777-2211" },
+  ],
+  cl2: [
+    { nome: "Bruno Tavares",  cargo: "Diretor de Pessoas", tipo: "Comercial",  email: "bruno.tavares@natura.com", telefone: "(11) 99432-1180" },
+    { nome: "Sofia Andrade",  cargo: "Financeiro",         tipo: "Financeiro", email: "financeiro@natura.com",    telefone: "(11) 2222-3030" },
+  ],
+  cl3: [
+    { nome: "Eduardo Pacheco", cargo: "VP de Operações",   tipo: "Comercial",  email: "eduardo.pacheco@vale.com", telefone: "(31) 98821-7755" },
+    { nome: "Carla Drummond",  cargo: "Procurement",       tipo: "Financeiro", email: "procurement@vale.com",     telefone: "(31) 3030-7777" },
+  ],
+  cl4: [
+    { nome: "Patrícia Lemos",  cargo: "Gerente de Treinamento", tipo: "Comercial", email: "patricia@magalu.com", telefone: "(11) 97712-3399" },
+  ],
+};
+
+export const clienteDocs: Record<string, { nome: string; tipo: string; tamanho: string; data: string }[]> = {
+  cl1: [
+    { nome: "Contrato_Master_Itau_2025.pdf", tipo: "PDF", tamanho: "1.2 MB", data: "10/05/2025" },
+    { nome: "Cartao_CNPJ.pdf",               tipo: "PDF", tamanho: "210 KB", data: "02/01/2025" },
+    { nome: "Briefing_Convencao.docx",       tipo: "DOCX", tamanho: "84 KB", data: "20/04/2025" },
+  ],
+  cl2: [
+    { nome: "Contrato_Natura.pdf",      tipo: "PDF", tamanho: "980 KB", data: "12/05/2025" },
+    { nome: "PO_Natura_2025-118.pdf",   tipo: "PDF", tamanho: "120 KB", data: "05/05/2025" },
+  ],
+  cl3: [
+    { nome: "Contrato_Vale_Workshop.pdf", tipo: "PDF", tamanho: "1.1 MB", data: "15/05/2025" },
+  ],
+  cl4: [],
+};
+
+// ============= PRÉ-BALANÇO =============
+export function preBalanco() {
+  const receitaVendas = vendas.reduce((a, v) => a + v.bruto, 0);
+  const recebimentosPrevistos = contasReceber.filter(c => c.status !== "pago").reduce((a, c) => a + c.valor, 0);
+  const comissaoRecebida = receitaVendas * 0.05;
+
+  const totalImpostos = vendas.reduce((a, v) => a + calcularVenda(v.bruto, v.cache, v.empresa).impostos, 0);
+  const cachesPagar  = vendas.reduce((a, v) => a + v.cache, 0);
+  const comissoesPagar = Object.values(comissoesPorColaborador()).reduce((a, c) => a + c.bruto, 0);
+  const logisticaCusto = 48500;
+  const fornecedores   = contasPagar.reduce((a, c) => a + c.valor, 0);
+  const despesasGerais = 38000;
+
+  const receitaTotal = receitaVendas + comissaoRecebida;
+  const despesaTotal = totalImpostos + cachesPagar + comissoesPagar + logisticaCusto + fornecedores + despesasGerais;
+  const lucroBruto = receitaVendas - cachesPagar - totalImpostos;
+  const lucroLiquido = receitaTotal - despesaTotal;
+  const margem = (lucroLiquido / receitaTotal) * 100;
+
+  return {
+    receitas: {
+      vendas: receitaVendas,
+      comissaoRecebida,
+      previstos: recebimentosPrevistos,
+      total: receitaTotal,
+    },
+    despesas: {
+      caches: cachesPagar,
+      impostos: totalImpostos,
+      fornecedores,
+      logistica: logisticaCusto,
+      comissoes: comissoesPagar,
+      gerais: despesasGerais,
+      total: despesaTotal,
+    },
+    lucroBruto,
+    lucroLiquido,
+    margem,
+  };
+}
+
+export const dashboardExecutivo = () => {
+  const pb = preBalanco();
+  return {
+    vendasMes: vendas.length,
+    faturamento: pb.receitas.vendas,
+    lucroLiquido: pb.lucroLiquido,
+    impostos: pb.despesas.impostos,
+    comissoes: pb.despesas.comissoes,
+    eventosFuturos: agendaEventos.filter(e => e.status !== "concluido").length,
+    contratosPendentes: contratos.filter(c => c.status === "enviado" || c.status === "rascunho").length,
+    recebimentosPendentes: contasReceber.filter(c => c.status !== "pago").reduce((a, c) => a + c.valor, 0),
+  };
+};
+

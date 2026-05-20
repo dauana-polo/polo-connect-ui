@@ -3,12 +3,13 @@ import { AppTopbar } from "@/components/AppSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { agendaEventos, formatBRL, kpis, palestrantes, receitaMensal } from "@/lib/mock-data";
+import { agendaEventos, dashboardExecutivo, formatBRL, kpis, palestrantes, receitaMensal } from "@/lib/mock-data";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  ArrowDownRight, ArrowUpRight, Calendar, DollarSign, MapPin, Star, Target, TrendingUp, Users,
+  ArrowDownRight, ArrowUpRight, Calendar, DollarSign, MapPin, Star, Target, TrendingUp,
+  Receipt, Wallet, FileSignature, Clock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
@@ -38,17 +39,40 @@ function KpiCard({ label, value, delta, icon: Icon, accent }: any) {
   );
 }
 
+function MiniKpi({ label, value, icon: Icon }: any) {
+  return (
+    <Card>
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className="h-9 w-9 rounded-md bg-muted grid place-items-center"><Icon className="h-4 w-4 text-muted-foreground" /></div>
+        <div>
+          <div className="text-[11px] uppercase text-muted-foreground font-medium">{label}</div>
+          <div className="text-lg font-bold">{value}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function Dashboard() {
+  const exec = dashboardExecutivo();
   return (
     <>
       <AppTopbar title="Dashboard Executivo" breadcrumb={["Home", "Dashboard"]} />
       <div className="p-6 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <KpiCard label="Receita Mensal" value={formatBRL(kpis.receita)} delta={kpis.receitaDelta} icon={DollarSign} accent="bg-gradient-to-br from-emerald-500 to-emerald-600" />
-          <KpiCard label="Eventos do mês" value={kpis.eventos} delta={kpis.eventosDelta} icon={Calendar} accent="bg-gradient-to-br from-violet-500 to-fuchsia-500" />
-          <KpiCard label="Leads ativos" value={kpis.leads} delta={kpis.leadsDelta} icon={Target} accent="bg-gradient-to-br from-blue-500 to-cyan-500" />
-          <KpiCard label="Vendas fechadas" value={kpis.vendas} delta={kpis.vendasDelta} icon={TrendingUp} accent="bg-gradient-to-br from-amber-500 to-orange-500" />
+          <KpiCard label="Faturamento mês" value={formatBRL(exec.faturamento)} delta={kpis.receitaDelta} icon={DollarSign} accent="bg-gradient-to-br from-emerald-500 to-emerald-600" />
+          <KpiCard label="Lucro líquido" value={formatBRL(exec.lucroLiquido)} delta={18.2} icon={TrendingUp} accent="bg-gradient-to-br from-violet-500 to-fuchsia-500" />
+          <KpiCard label="Impostos retidos" value={formatBRL(exec.impostos)} delta={-2.4} icon={Receipt} accent="bg-gradient-to-br from-rose-500 to-rose-600" />
+          <KpiCard label="Comissões a pagar" value={formatBRL(exec.comissoes)} delta={kpis.vendasDelta} icon={Wallet} accent="bg-gradient-to-br from-amber-500 to-orange-500" />
         </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <MiniKpi label="Vendas do mês" value={exec.vendasMes} icon={TrendingUp} />
+          <MiniKpi label="Eventos futuros" value={exec.eventosFuturos} icon={Calendar} />
+          <MiniKpi label="Contratos pendentes" value={exec.contratosPendentes} icon={FileSignature} />
+          <MiniKpi label="Recebimentos pendentes" value={formatBRL(exec.recebimentosPendentes)} icon={Clock} />
+        </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
