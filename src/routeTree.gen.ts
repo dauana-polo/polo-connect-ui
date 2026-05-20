@@ -11,6 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppPropostasRouteImport } from './routes/app.propostas'
+import { Route as AppKanbanRouteImport } from './routes/app.kanban'
+import { Route as AppJuridicoRouteImport } from './routes/app.juridico'
+import { Route as AppFinanceiroRouteImport } from './routes/app.financeiro'
+import { Route as AppCrmRouteImport } from './routes/app.crm'
+import { Route as AppAdminRouteImport } from './routes/app.admin'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -22,31 +29,113 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPropostasRoute = AppPropostasRouteImport.update({
+  id: '/propostas',
+  path: '/propostas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppKanbanRoute = AppKanbanRouteImport.update({
+  id: '/kanban',
+  path: '/kanban',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppJuridicoRoute = AppJuridicoRouteImport.update({
+  id: '/juridico',
+  path: '/juridico',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFinanceiroRoute = AppFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCrmRoute = AppCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/admin': typeof AppAdminRoute
+  '/app/crm': typeof AppCrmRoute
+  '/app/financeiro': typeof AppFinanceiroRoute
+  '/app/juridico': typeof AppJuridicoRoute
+  '/app/kanban': typeof AppKanbanRoute
+  '/app/propostas': typeof AppPropostasRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/crm': typeof AppCrmRoute
+  '/app/financeiro': typeof AppFinanceiroRoute
+  '/app/juridico': typeof AppJuridicoRoute
+  '/app/kanban': typeof AppKanbanRoute
+  '/app/propostas': typeof AppPropostasRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/admin': typeof AppAdminRoute
+  '/app/crm': typeof AppCrmRoute
+  '/app/financeiro': typeof AppFinanceiroRoute
+  '/app/juridico': typeof AppJuridicoRoute
+  '/app/kanban': typeof AppKanbanRoute
+  '/app/propostas': typeof AppPropostasRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/admin'
+    | '/app/crm'
+    | '/app/financeiro'
+    | '/app/juridico'
+    | '/app/kanban'
+    | '/app/propostas'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app'
-  id: '__root__' | '/' | '/app'
+  to:
+    | '/'
+    | '/app/admin'
+    | '/app/crm'
+    | '/app/financeiro'
+    | '/app/juridico'
+    | '/app/kanban'
+    | '/app/propostas'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/admin'
+    | '/app/crm'
+    | '/app/financeiro'
+    | '/app/juridico'
+    | '/app/kanban'
+    | '/app/propostas'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +154,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/propostas': {
+      id: '/app/propostas'
+      path: '/propostas'
+      fullPath: '/app/propostas'
+      preLoaderRoute: typeof AppPropostasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/kanban': {
+      id: '/app/kanban'
+      path: '/kanban'
+      fullPath: '/app/kanban'
+      preLoaderRoute: typeof AppKanbanRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/juridico': {
+      id: '/app/juridico'
+      path: '/juridico'
+      fullPath: '/app/juridico'
+      preLoaderRoute: typeof AppJuridicoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/financeiro': {
+      id: '/app/financeiro'
+      path: '/financeiro'
+      fullPath: '/app/financeiro'
+      preLoaderRoute: typeof AppFinanceiroRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/crm': {
+      id: '/app/crm'
+      path: '/crm'
+      fullPath: '/app/crm'
+      preLoaderRoute: typeof AppCrmRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin': {
+      id: '/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
+  AppCrmRoute: typeof AppCrmRoute
+  AppFinanceiroRoute: typeof AppFinanceiroRoute
+  AppJuridicoRoute: typeof AppJuridicoRoute
+  AppKanbanRoute: typeof AppKanbanRoute
+  AppPropostasRoute: typeof AppPropostasRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
+  AppCrmRoute: AppCrmRoute,
+  AppFinanceiroRoute: AppFinanceiroRoute,
+  AppJuridicoRoute: AppJuridicoRoute,
+  AppKanbanRoute: AppKanbanRoute,
+  AppPropostasRoute: AppPropostasRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
