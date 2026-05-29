@@ -9,8 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SolucoesRouteImport } from './routes/solucoes'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
+import { Route as InstitucionalRouteImport } from './routes/institucional'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -31,6 +33,11 @@ import { Route as AppComissoesRouteImport } from './routes/app.comissoes'
 import { Route as AppClientesRouteImport } from './routes/app.clientes'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 
+const SolucoesRoute = SolucoesRouteImport.update({
+  id: '/solucoes',
+  path: '/solucoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalRoute = PortalRouteImport.update({
   id: '/portal',
   path: '/portal',
@@ -39,6 +46,11 @@ const PortalRoute = PortalRouteImport.update({
 const OrcamentoRoute = OrcamentoRouteImport.update({
   id: '/orcamento',
   path: '/orcamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstitucionalRoute = InstitucionalRouteImport.update({
+  id: '/institucional',
+  path: '/institucional',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogoRoute = CatalogoRouteImport.update({
@@ -141,8 +153,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/catalogo': typeof CatalogoRoute
+  '/institucional': typeof InstitucionalRoute
   '/orcamento': typeof OrcamentoRoute
   '/portal': typeof PortalRouteWithChildren
+  '/solucoes': typeof SolucoesRoute
   '/app/admin': typeof AppAdminRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
@@ -163,7 +177,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
+  '/institucional': typeof InstitucionalRoute
   '/orcamento': typeof OrcamentoRoute
+  '/solucoes': typeof SolucoesRoute
   '/app/admin': typeof AppAdminRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
@@ -186,8 +202,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/catalogo': typeof CatalogoRoute
+  '/institucional': typeof InstitucionalRoute
   '/orcamento': typeof OrcamentoRoute
   '/portal': typeof PortalRouteWithChildren
+  '/solucoes': typeof SolucoesRoute
   '/app/admin': typeof AppAdminRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
@@ -211,8 +229,10 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/catalogo'
+    | '/institucional'
     | '/orcamento'
     | '/portal'
+    | '/solucoes'
     | '/app/admin'
     | '/app/clientes'
     | '/app/comissoes'
@@ -233,7 +253,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/catalogo'
+    | '/institucional'
     | '/orcamento'
+    | '/solucoes'
     | '/app/admin'
     | '/app/clientes'
     | '/app/comissoes'
@@ -255,8 +277,10 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/catalogo'
+    | '/institucional'
     | '/orcamento'
     | '/portal'
+    | '/solucoes'
     | '/app/admin'
     | '/app/clientes'
     | '/app/comissoes'
@@ -279,13 +303,22 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   CatalogoRoute: typeof CatalogoRoute
+  InstitucionalRoute: typeof InstitucionalRoute
   OrcamentoRoute: typeof OrcamentoRoute
   PortalRoute: typeof PortalRouteWithChildren
+  SolucoesRoute: typeof SolucoesRoute
   PalestranteIdRoute: typeof PalestranteIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/solucoes': {
+      id: '/solucoes'
+      path: '/solucoes'
+      fullPath: '/solucoes'
+      preLoaderRoute: typeof SolucoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal': {
       id: '/portal'
       path: '/portal'
@@ -298,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/orcamento'
       fullPath: '/orcamento'
       preLoaderRoute: typeof OrcamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institucional': {
+      id: '/institucional'
+      path: '/institucional'
+      fullPath: '/institucional'
+      preLoaderRoute: typeof InstitucionalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalogo': {
@@ -487,20 +527,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   CatalogoRoute: CatalogoRoute,
+  InstitucionalRoute: InstitucionalRoute,
   OrcamentoRoute: OrcamentoRoute,
   PortalRoute: PortalRouteWithChildren,
+  SolucoesRoute: SolucoesRoute,
   PalestranteIdRoute: PalestranteIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
