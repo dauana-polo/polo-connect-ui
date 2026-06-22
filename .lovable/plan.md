@@ -1,61 +1,87 @@
+# Plano — CRM Comercial Polo Palestrantes
 
-## Objetivo
+Transformar o módulo `/app/crm` em um CRM profissional (estilo Pipedrive/HubSpot) adaptado para venda de palestras, com pipeline kanban, atividades automáticas, recomendações, propostas vinculadas, histórico auditável e disparo automático dos Kanbans operacionais ao fechar a venda.
 
-Criar todo o banco de dados do ERP Polo Palestrantes no Lovable Cloud, exatamente como definido no SQL enviado: 22 tabelas, triggers automáticos, RLS por perfil, índices e regras de comissão padrão. Banco fica **vazio** — sem dados mock migrados. As telas continuam usando mock por enquanto.
+---
 
-## O que será criado
+## 1. Banco de Dados (migration)
 
-**22 tabelas** organizadas em 16 blocos:
-1. `usuarios` — perfis internos (admin, gestor, comercial, pós-venda, jurídico, financeiro, logística, palestrante)
-2. `empresas_polo` — 3 CNPJs (Polo Eventos, Polo Internacional, Polo Talents) com alíquotas
-3. `clientes` + `cliente_contatos`
-4. `palestrantes` (com índice de busca textual via `pg_trgm`)
-5. `leads` + `lead_interacoes` (CRM)
-6. `propostas` + `proposta_palestrantes`
-7. `vendas` (com colunas calculadas automaticamente: ISS, PIS, COFINS, IRRF, CSLL, líquido)
-8. `kanban_cards` (multisetorial)
-9. `contas_receber`, `contas_pagar`, `comissoes`, `regras_comissao` (com 4 regras padrão)
-10. `contratos` (com numeração automática CT-ANO-NNN)
-11. `logistica` (passagens, hotel, transfer)
-12. `eventos_nps` + `nps_respostas`
-13. `documentos`
-14. `checklists` + `checklist_itens`
-15. `palestrante_indicacoes`
-16. `site_config`
+### Ajustes em tabelas existentes
+- `leads`: adicionar coluna `etapa` (enum `lead_etapa`) com as 9 fases do pipeline; `responsavel_id`, `data_evento`, `cidade_evento`, `publico_estimado`, `tema`, `objetivo`, `orcamento_min`, `orcamento_max`, `motivo_perda`.
+- `palestrante_indicacoes` (já existe): expandir com `cache_proposto`, `status` (`pendente|consultado|disponivel|indisponivel|recomendado`), `observacoes`, `ordem`, `disponibilidade_verificada_em`.
+- `propostas`: adicionar `versao`, `lead_id` (FK), `condicoes_comerciais`, `taxas`, `observacoes`.
+- `proposta_palestrantes`: garantir FK obrigatória para `palestrante_indicacoes` (proposta só usa palestrantes recomendados).
 
-**3 triggers automáticos:**
-- Ao criar venda → cria 5 cards no kanban + linha de logística + NPS com QR token
-- Ao marcar conta como recebida → calcula comissões automaticamente conforme `regras_comissao`
-- Ao criar contrato → gera número sequencial (CT-2025-001)
+### Tabelas novas
+- `crm_atividades` — tipo (`ligacao|email|whatsapp|reuniao|tarefa|followup`), título, descrição, prazo, concluída, concluída_em, responsável, lead_id.
+- `crm_historico` — timeline imutável: lead_id, usuario_id, tipo_evento, descricao, payload jsonb, created_at.
+- `crm_comentarios` — lead_id, usuario_id, texto, created_at.
+- `projetos_operacionais` — criado ao ganhar a venda; agrega referências dos 4 kanbans operacionais.
 
-**RLS por perfil** usando função `meu_perfil()` (security definer): time interno vê vendas, palestrante só vê os próprios dados, financeiro vê comissões e contas.
+### Triggers automáticos
+- **`trg_lead_etapa_atividades`**: ao inserir lead OU alterar `etapa`, cria as atividades pré-definidas da etapa correspondente (Contato Recebido, Briefing, Consulta, Negociação com 3 follow-ups, Contratação).
+- **`trg_lead_historico`**: log automático em `crm_historico` para qualquer mudança em `etapa`, `responsavel_id`, `orcamento`, inclusão/remoção de palestrantes recomendados, alteração/criação de proposta.
+- **`trg_lead_ganho_kanbans`**: ao mover para `ganho`, cria registro em `projetos_operacionais` + 4 cards de kanban (CS, Financeiro, Suporte Palestrante, Operação Evento) já populados com cliente, evento, palestrante contratado, cachê.
 
-**Seeds mínimos da estrutura:**
-- 3 empresas Polo (CNPJs)
-- 4 regras de comissão (consultor 10%, curador 5%, CS 3%, gestão 2%)
+### RLS
+- Consultor: CRUD nos próprios leads (`responsavel_id = auth.uid()`).
+- Líder e Admin: acesso total via `has_role()`.
 
-## Adaptações necessárias para o Lovable Cloud
+---
 
-O SQL enviado precisa de pequenos ajustes obrigatórios para funcionar no Cloud (regras de infra do Supabase gerenciado):
+## 2. Frontend — `/app/crm`
 
-1. **Adicionar `GRANT` em todas as tabelas públicas** — o Cloud não concede privilégios padrão a `authenticated`/`service_role`. Sem isso, o PostgREST retorna erro de permissão mesmo com RLS aberto.
-2. **Adicionar políticas RLS faltantes** — várias tabelas têm `ENABLE ROW LEVEL SECURITY` no SQL mas só algumas têm `CREATE POLICY` (vendas, palestrantes, comissões, contas_receber). Tabelas com RLS sem política ficam **totalmente bloqueadas**. Vou completar com políticas equivalentes baseadas em `meu_perfil()` para: usuarios, clientes, leads, propostas, kanban_cards, contas_pagar, contratos, documentos, logistica, eventos_nps.
-3. **Manter `search_path` nas funções** — adicionar `set search_path = public` em `criar_kanban_venda`, `calcular_comissoes`, `gerar_numero_contrato` e `meu_perfil` para passar nos checks de segurança.
-4. **`extension uuid-ossp`** — já vem habilitada no Cloud; mantenho o `if not exists`.
+### Layout
+```text
+┌─ Header: filtros (responsável, período) + botão "Novo Lead" + toggle Kanban/Lista
+├─ Dashboard (cards de KPIs no topo, colapsável)
+└─ Pipeline Kanban (9 colunas, drag-and-drop)
+```
 
-Nenhuma tabela, coluna, trigger ou regra de negócio do seu SQL será alterada — só adicionados GRANTs/políticas e o `search_path`.
+### Componentes principais
+- `CrmPipeline.tsx` — board com 9 colunas; drag-and-drop muda `etapa` (dispara triggers).
+- `LeadCard.tsx` — card resumo (cliente, valor, palestrante destaque, atividades pendentes, dias na etapa).
+- `LeadDrawer.tsx` — drawer lateral ao clicar no card, com abas:
+  - **Detalhes** — campos editáveis conforme etapa (briefing exige campos obrigatórios).
+  - **Recomendações** — adicionar/remover palestrantes (busca em `palestrantes`), cachê, status, obs.
+  - **Consultas** — para cada recomendado: botões "Consultar agenda/cachê/disponibilidade", muda status.
+  - **Propostas** — lista de propostas com versões; criar nova só permite selecionar palestrantes que estão na aba Recomendações.
+  - **Atividades** — pendentes/concluídas, criar manualmente (ligação, email, WhatsApp, reunião).
+  - **Comentários** — chat interno.
+  - **Timeline** — `crm_historico` em ordem cronológica.
+- `CrmDashboard.tsx` — KPIs: leads recebidos, briefings, propostas, taxa de conversão, ganhos/perdidos, valor em negociação, valor ganho, ticket médio, conversão por consultor/palestrante, tempo médio por etapa.
 
-## O que NÃO será feito neste passo
+### Regras de UI
+- Botão "Criar Proposta" desabilitado se não houver palestrantes recomendados.
+- Modal de proposta lista apenas palestrantes presentes em `palestrante_indicacoes` do lead.
+- Mover card para "Ganho" abre confirmação que mostra o que será criado nos kanbans operacionais.
+- Mover para "Perdido" exige `motivo_perda`.
+- Campos obrigatórios da etapa 2 são validados antes de avançar para etapa 3+.
 
-- Telas do ERP continuam usando `mock-data` (não vou conectar nada).
-- Não vou migrar dados mock — banco fica limpo.
-- Não vou criar buckets de Storage (palestrante fotos, contratos PDF) — fica para um próximo passo quando você quiser.
-- Não vou mexer em auth/Google OAuth.
+### Permissões (UI + RLS)
+- Consultor: cria/edita seus cards e propostas.
+- Líder: tudo do consultor + reatribuir responsável + aprovar exceções (override de regras).
+- Admin: tudo.
 
-## Próximo passo (depois deste)
+---
 
-Quando quiser, escolhemos um módulo (Clientes, Vendas ou CRM) para começar a conectar as telas ao banco real, módulo a módulo.
+## 3. Detalhes técnicos
 
-## Aprovação
+- **Stack**: TanStack Start + Query + Supabase client browser (RLS escopa por perfil).
+- **Drag-and-drop**: `@dnd-kit/core` (já no projeto, senão adiciono).
+- **Loaders**: `ensureQueryData` para leads + `useSuspenseQuery` no componente.
+- **Mutations**: `useMutation` com `queryClient.invalidateQueries` para o pipeline e timeline.
+- **Realtime opcional**: deixar fora desta entrega; recarrega ao focar.
+- **Triggers SQL** garantem atividades, histórico e kanbans automáticos — frontend só dispara update de `etapa`/insert de lead; consistência fica no banco.
 
-Ao aprovar este plano, executo uma única migration com todo o schema (22 tabelas + triggers + RLS + grants + seeds das empresas e regras de comissão).
+---
+
+## 4. Entrega em fases
+
+1. **Migration** (tabelas, colunas, triggers, RLS, grants) — aprovação primeiro.
+2. **Pipeline Kanban + LeadDrawer (abas Detalhes, Recomendações, Atividades, Timeline, Comentários)**.
+3. **Aba Consultas + Aba Propostas (com regra de palestrantes recomendados)**.
+4. **Dashboard de KPIs**.
+5. **Confirmação visual da etapa "Ganho" + verificação dos kanbans operacionais criados**.
+
+Cada fase é validada antes de seguir para a próxima. Posso começar pela migration assim que você aprovar este plano.
