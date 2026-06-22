@@ -217,7 +217,7 @@ function TabRecomendacoes({ leadId }: { leadId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lead_palestrante_recomendacoes")
-        .select("*, palestrante:palestrantes(id,nome,cache_base)")
+        .select("*, palestrante:palestrantes(id,nome,cache_padrao)")
         .eq("lead_id", leadId)
         .order("ordem");
       if (error) throw error;
@@ -229,7 +229,7 @@ function TabRecomendacoes({ leadId }: { leadId: string }) {
   const { data: palestrantes = [] } = useQuery({
     queryKey: ["palestrantes-busca", busca],
     queryFn: async () => {
-      let q = supabase.from("palestrantes").select("id,nome,cache_base").limit(10);
+      let q = supabase.from("palestrantes").select("id,nome,cache_padrao").limit(10);
       if (busca) q = q.ilike("nome", `%${busca}%`);
       const { data, error } = await q;
       if (error) throw error;
@@ -240,7 +240,7 @@ function TabRecomendacoes({ leadId }: { leadId: string }) {
   const add = useMutation({
     mutationFn: async (p: any) => {
       const { error } = await supabase.from("lead_palestrante_recomendacoes").insert({
-        lead_id: leadId, palestrante_id: p.id, cache_proposto: p.cache_base, ordem: recs.length,
+        lead_id: leadId, palestrante_id: p.id, cache_proposto: p.cache_padrao, ordem: recs.length,
       });
       if (error) throw error;
     },
@@ -273,7 +273,7 @@ function TabRecomendacoes({ leadId }: { leadId: string }) {
               <button key={p.id} onClick={() => { add.mutate(p); setBusca(""); }}
                 className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex justify-between">
                 <span>{p.nome}</span>
-                <span className="text-muted-foreground">{formatBRL(p.cache_base)}</span>
+                <span className="text-muted-foreground">{formatBRL(p.cache_padrao)}</span>
               </button>
             ))}
             {palestrantes.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum resultado</div>}
