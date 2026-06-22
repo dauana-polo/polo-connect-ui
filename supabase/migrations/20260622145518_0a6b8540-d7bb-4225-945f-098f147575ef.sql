@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.validar_proposta_palestrante() FROM public, anon, authenticated;

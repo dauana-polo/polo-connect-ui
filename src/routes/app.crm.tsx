@@ -1,48 +1,109 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { AppTopbar } from "@/components/AppSidebar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { formatBRL, interacoes, leads, pipelineStages } from "@/lib/mock-data";
-import { Calendar, Filter, Mail, MessageSquare, Mic, Phone, Plus, Search, User } from "lucide-react";
+import { ETAPAS, formatBRL, type Etapa } from "@/lib/crm/constants";
+import { LeadDrawer } from "@/components/crm/LeadDrawer";
+import { NewLeadDialog } from "@/components/crm/NewLeadDialog";
+import { Calendar, Search, User, TrendingUp, Trophy, AlertCircle, DollarSign } from "lucide-react";
 
-export const Route = createFileRoute("/app/crm")({
-  component: CRM,
-});
+export const Route = createFileRoute("/app/crm")({ component: CRM });
+
+type Lead = {
+  id: string; empresa: string; etapa: Etapa; tema_evento: string | null;
+  data_pretendida: string | null; cidade_evento: string | null;
+  orcamento_est: number | null; consultor_id: string | null;
+  consultor?: { nome: string } | null;
+  cliente?: { nome_fantasia: string | null; razao_social: string | null } | null;
+  created_at: string; updated_at: string; etapa_alterada_em: string | null;
+  atividades_pendentes?: number;
+};
 
 function CRM() {
-  const [openLead, setOpenLead] = useState<any>(null);
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
+
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id,empresa,etapa,tema_evento,data_pretendida,cidade_evento,orcamento_est,consultor_id,created_at,updated_at,etapa_alterada_em,cliente:clientes(nome_fantasia,razao_social),consultor:usuarios!leads_consultor_id_fkey(nome)")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data as unknown as Lead[];
+    },
+  });
+
+  const filtrados = useMemo(() => {
+    const q = busca.toLowerCase().trim();
+    if (!q) return leads;
+    return leads.filter((l) =>
+      [l.empresa, l.tema_evento, l.cidade_evento, l.consultor?.nome]
+        .filter(Boolean).join(" ").toLowerCase().includes(q),
+    );
+  }, [leads, busca]);
+
+  const kpis = useMemo(() => {
+    const ganhos = leads.filter((l) => l.etapa === "ganho");
+    const perdidos = leads.filter((l) => l.etapa === "perdido");
+    const negociando = leads.filter((l) => !["ganho", "perdido"].includes(l.etapa));
+    const valorNeg = negociando.reduce((s, l) => s + (l.orcamento_est ?? 0), 0);
+    const valorGanho = ganhos.reduce((s, l) => s + (l.orcamento_est ?? 0), 0);
+    const total = ganhos.length + perdidos.length;
+    const taxa = total > 0 ? (ganhos.length / total) * 100 : 0;
+    const ticket = ganhos.length > 0 ? valorGanho / ganhos.length : 0;
+    return {
+      leads: leads.length, ganhos: ganhos.length, perdidos: perdidos.length,
+      valorNeg, valorGanho, taxa, ticket, negociando: negociando.length,
+    };
+  }, [leads]);
 
   return (
     <>
       <AppTopbar title="CRM Comercial" breadcrumb={["Home", "CRM", "Pipeline"]} />
       <div className="p-6 space-y-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <Kpi icon={TrendingUp} label="Leads" value={kpis.leads.toString()} />
+          <Kpi icon={User} label="Em negociação" value={kpis.negociando.toString()} />
+          <Kpi icon={Trophy} label="Ganhos" value={kpis.ganhos.toString()} color="text-emerald-600" />
+          <Kpi icon={AlertCircle} label="Perdidos" value={kpis.perdidos.toString()} color="text-rose-600" />
+          <Kpi icon={TrendingUp} label="Conversão" value={`${kpis.taxa.toFixed(0)}%`} />
+          <Kpi icon={DollarSign} label="Em negociação" value={formatBRL(kpis.valorNeg)} />
+          <Kpi icon={DollarSign} label="Ticket médio" value={formatBRL(kpis.ticket)} color="text-emerald-600" />
+        </div>
+
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 flex-1 max-w-md">
             <div className="flex-1 flex items-center gap-2 h-10 px-3 rounded-lg border bg-card">
               <Search className="h-4 w-4 text-muted-foreground" />
-              <input className="flex-1 bg-transparent outline-none text-sm" placeholder="Buscar empresa, evento, consultor..." />
+              <input
+                className="flex-1 bg-transparent outline-none text-sm"
+                placeholder="Buscar empresa, tema, cidade…"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
             </div>
-            <Button variant="outline" size="icon"><Filter className="h-4 w-4" /></Button>
           </div>
-          <Button><Plus className="h-4 w-4 mr-1.5" /> Novo Lead</Button>
+          <NewLeadDialog />
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          {pipelineStages.map((stage) => {
-            const stageLeads = leads.filter((l) => l.stage === stage.id);
-            const total = stageLeads.reduce((s, l) => s + l.valor, 0);
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-9 gap-3">
+          {ETAPAS.map((stage) => {
+            const stageLeads = filtrados.filter((l) => l.etapa === stage.id);
+            const total = stageLeads.reduce((s, l) => s + (l.orcamento_est ?? 0), 0);
             return (
               <div key={stage.id} className="bg-muted/40 rounded-xl p-3 min-h-[500px]">
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${stage.cor}`} />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider">{stage.titulo}</h3>
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{stageLeads.length}</Badge>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`h-2 w-2 rounded-full ${stage.cor} shrink-0`} />
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider truncate">{stage.titulo}</h3>
                   </div>
+                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{stageLeads.length}</Badge>
                 </div>
                 <div className="text-[10px] text-muted-foreground px-1 mb-2 font-medium">
                   {formatBRL(total)}
@@ -51,80 +112,52 @@ function CRM() {
                   {stageLeads.map((l) => (
                     <button
                       key={l.id}
-                      onClick={() => setOpenLead(l)}
+                      onClick={() => setOpenLeadId(l.id)}
                       className="w-full text-left bg-card rounded-lg p-3 border border-border hover:border-primary/40 hover:shadow-sm transition-all"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="font-medium text-sm">{l.empresa}</div>
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{l.evento}</div>
-                      <div className="mt-2.5 text-sm font-semibold text-emerald-600">{formatBRL(l.valor)}</div>
-                      <div className="mt-2.5 pt-2.5 border-t border-border space-y-1">
-                        <div className="text-[11px] text-muted-foreground flex items-center gap-1.5"><Mic className="h-3 w-3" />{l.palestrante}</div>
-                        <div className="flex items-center justify-between">
-                          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5"><User className="h-3 w-3" />{l.consultor}</div>
-                          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5"><Calendar className="h-3 w-3" />{l.data}</div>
-                        </div>
+                      <div className="font-medium text-sm leading-tight">{l.empresa}</div>
+                      {l.tema_evento && <div className="text-xs text-muted-foreground mt-0.5 truncate">{l.tema_evento}</div>}
+                      <div className="mt-2 text-sm font-semibold text-emerald-600">{formatBRL(l.orcamento_est)}</div>
+                      <div className="mt-2 pt-2 border-t border-border space-y-1">
+                        {l.consultor?.nome && (
+                          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                            <User className="h-3 w-3" />{l.consultor.nome}
+                          </div>
+                        )}
+                        {l.data_pretendida && (
+                          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                            <Calendar className="h-3 w-3" />{new Date(l.data_pretendida).toLocaleDateString("pt-BR")}
+                          </div>
+                        )}
                       </div>
                     </button>
                   ))}
+                  {stageLeads.length === 0 && (
+                    <div className="text-[11px] text-muted-foreground text-center py-4 italic">—</div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
+
+        {isLoading && <div className="text-sm text-muted-foreground">Carregando…</div>}
       </div>
 
-      <Dialog open={!!openLead} onOpenChange={(o) => !o && setOpenLead(null)}>
-        <DialogContent className="max-w-3xl">
-          {openLead && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl">{openLead.empresa}</DialogTitle>
-                <p className="text-sm text-muted-foreground">{openLead.evento}</p>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-2">
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Card><CardContent className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor</div><div className="font-semibold mt-0.5">{formatBRL(openLead.valor)}</div></CardContent></Card>
-                    <Card><CardContent className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Data</div><div className="font-semibold mt-0.5">{openLead.data}</div></CardContent></Card>
-                    <Card><CardContent className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Consultor</div><div className="font-semibold mt-0.5 text-sm">{openLead.consultor}</div></CardContent></Card>
-                    <Card><CardContent className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Palestrante</div><div className="font-semibold mt-0.5 text-sm">{openLead.palestrante}</div></CardContent></Card>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline"><Mail className="h-3.5 w-3.5 mr-1.5" />E-mail</Button>
-                    <Button size="sm" variant="outline"><Phone className="h-3.5 w-3.5 mr-1.5" />Ligar</Button>
-                    <Button size="sm"><Plus className="h-3.5 w-3.5 mr-1.5" />Proposta</Button>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold mb-3">Histórico de interações</h3>
-                  <div className="space-y-3 max-h-72 overflow-y-auto">
-                    {interacoes.map((i) => {
-                      const Icon = i.tipo === "email" ? Mail : i.tipo === "ligacao" ? Phone : i.tipo === "reuniao" ? Calendar : MessageSquare;
-                      return (
-                        <div key={i.id} className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-muted grid place-items-center shrink-0">
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm">{i.titulo}</div>
-                            <div className="text-xs text-muted-foreground">{i.autor} · {i.data}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <Input placeholder="Adicionar nota..." className="text-sm" />
-                    <Button size="sm">Salvar</Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <LeadDrawer leadId={openLeadId} onClose={() => setOpenLeadId(null)} />
     </>
+  );
+}
+
+function Kpi({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color?: string }) {
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <Icon className="h-3 w-3" />{label}
+        </div>
+        <div className={`font-semibold mt-1 text-sm ${color ?? ""}`}>{value}</div>
+      </CardContent>
+    </Card>
   );
 }
