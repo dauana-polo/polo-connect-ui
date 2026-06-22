@@ -470,6 +470,170 @@ export type Database = {
           },
         ]
       }
+      crm_atividades: {
+        Row: {
+          automatica: boolean | null
+          concluida: boolean | null
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string | null
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          lead_id: string
+          prazo: string | null
+          responsavel_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          automatica?: boolean | null
+          concluida?: boolean | null
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id: string
+          prazo?: string | null
+          responsavel_id?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          automatica?: boolean | null
+          concluida?: boolean | null
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id?: string
+          prazo?: string | null
+          responsavel_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_atividades_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_atividades_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_atividades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_atividades_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_comentarios: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string
+          texto: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          texto: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          texto?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_comentarios_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_comentarios_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_historico: {
+        Row: {
+          created_at: string | null
+          descricao: string
+          id: string
+          lead_id: string
+          payload: Json | null
+          tipo_evento: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          descricao: string
+          id?: string
+          lead_id: string
+          payload?: Json | null
+          tipo_evento: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          lead_id?: string
+          payload?: Json | null
+          tipo_evento?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_historico_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_historico_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos: {
         Row: {
           cliente_id: string | null
@@ -717,6 +881,70 @@ export type Database = {
           },
         ]
       }
+      lead_palestrante_recomendacoes: {
+        Row: {
+          cache_proposto: number | null
+          created_at: string | null
+          criado_por: string | null
+          disponibilidade_verificada_em: string | null
+          id: string
+          lead_id: string
+          observacoes: string | null
+          ordem: number | null
+          palestrante_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          cache_proposto?: number | null
+          created_at?: string | null
+          criado_por?: string | null
+          disponibilidade_verificada_em?: string | null
+          id?: string
+          lead_id: string
+          observacoes?: string | null
+          ordem?: number | null
+          palestrante_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          cache_proposto?: number | null
+          created_at?: string | null
+          criado_por?: string | null
+          disponibilidade_verificada_em?: string | null
+          id?: string
+          lead_id?: string
+          observacoes?: string | null
+          ordem?: number | null
+          palestrante_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_palestrante_recomendacoes_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_palestrante_recomendacoes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_palestrante_recomendacoes_palestrante_id_fkey"
+            columns: ["palestrante_id"]
+            isOneToOne: false
+            referencedRelation: "palestrantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           cidade_evento: string | null
@@ -731,11 +959,16 @@ export type Database = {
           descricao: string | null
           empresa: string
           etapa: string | null
+          etapa_alterada_em: string | null
           formato: string | null
           id: string
           motivo_perda: string | null
+          objetivo: string | null
           orcamento_est: number | null
+          orcamento_max: number | null
+          orcamento_min: number | null
           origem: string | null
+          posicao: number | null
           publico_estimado: number | null
           tema_evento: string | null
           updated_at: string | null
@@ -753,11 +986,16 @@ export type Database = {
           descricao?: string | null
           empresa: string
           etapa?: string | null
+          etapa_alterada_em?: string | null
           formato?: string | null
           id?: string
           motivo_perda?: string | null
+          objetivo?: string | null
           orcamento_est?: number | null
+          orcamento_max?: number | null
+          orcamento_min?: number | null
           origem?: string | null
+          posicao?: number | null
           publico_estimado?: number | null
           tema_evento?: string | null
           updated_at?: string | null
@@ -775,11 +1013,16 @@ export type Database = {
           descricao?: string | null
           empresa?: string
           etapa?: string | null
+          etapa_alterada_em?: string | null
           formato?: string | null
           id?: string
           motivo_perda?: string | null
+          objetivo?: string | null
           orcamento_est?: number | null
+          orcamento_max?: number | null
+          orcamento_min?: number | null
           origem?: string | null
+          posicao?: number | null
           publico_estimado?: number | null
           tema_evento?: string | null
           updated_at?: string | null
@@ -1112,6 +1355,7 @@ export type Database = {
           ordem: number | null
           palestrante_id: string | null
           proposta_id: string | null
+          recomendacao_id: string | null
           selecionado: boolean | null
         }
         Insert: {
@@ -1121,6 +1365,7 @@ export type Database = {
           ordem?: number | null
           palestrante_id?: string | null
           proposta_id?: string | null
+          recomendacao_id?: string | null
           selecionado?: boolean | null
         }
         Update: {
@@ -1130,6 +1375,7 @@ export type Database = {
           ordem?: number | null
           palestrante_id?: string | null
           proposta_id?: string | null
+          recomendacao_id?: string | null
           selecionado?: boolean | null
         }
         Relationships: [
@@ -1147,50 +1393,72 @@ export type Database = {
             referencedRelation: "propostas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "proposta_palestrantes_recomendacao_id_fkey"
+            columns: ["recomendacao_id"]
+            isOneToOne: false
+            referencedRelation: "lead_palestrante_recomendacoes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       propostas: {
         Row: {
           cliente_id: string | null
+          condicoes_comerciais: string | null
           consultor_id: string | null
           created_at: string | null
           descricao: string | null
           id: string
           lead_id: string | null
+          observacoes: string | null
           pdf_proposta_url: string | null
           pdf_sugestao_url: string | null
           status: string | null
+          taxas: number | null
           titulo: string
           updated_at: string | null
           validade: string | null
+          valor_total: number | null
+          versao: number | null
         }
         Insert: {
           cliente_id?: string | null
+          condicoes_comerciais?: string | null
           consultor_id?: string | null
           created_at?: string | null
           descricao?: string | null
           id?: string
           lead_id?: string | null
+          observacoes?: string | null
           pdf_proposta_url?: string | null
           pdf_sugestao_url?: string | null
           status?: string | null
+          taxas?: number | null
           titulo: string
           updated_at?: string | null
           validade?: string | null
+          valor_total?: number | null
+          versao?: number | null
         }
         Update: {
           cliente_id?: string | null
+          condicoes_comerciais?: string | null
           consultor_id?: string | null
           created_at?: string | null
           descricao?: string | null
           id?: string
           lead_id?: string | null
+          observacoes?: string | null
           pdf_proposta_url?: string | null
           pdf_sugestao_url?: string | null
           status?: string | null
+          taxas?: number | null
           titulo?: string
           updated_at?: string | null
           validade?: string | null
+          valor_total?: number | null
+          versao?: number | null
         }
         Relationships: [
           {
