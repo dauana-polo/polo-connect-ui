@@ -1,9 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   LayoutDashboard, Users, FileText, Kanban, DollarSign, Scale,
   Settings, Mic2, Search, Bell, ChevronDown, Sparkles,
-  Plane, ClipboardCheck, Building2, TrendingUp, UserCog, Wallet, PieChart,
+  Plane, ClipboardCheck, Building2, TrendingUp, UserCog, Wallet, PieChart, Menu,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const nav = [
   { group: "Principal", items: [
@@ -33,13 +35,12 @@ const nav = [
   ]},
 ];
 
-export function AppSidebar() {
+function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (to: string, exact?: boolean) =>
     exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
-
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <>
       <div className="h-16 flex items-center gap-2.5 px-5 border-b border-sidebar-border">
         <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 grid place-items-center shadow-lg shadow-violet-500/20">
           <Sparkles className="h-5 w-5 text-white" />
@@ -49,7 +50,6 @@ export function AppSidebar() {
           <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/50">Enterprise</div>
         </div>
       </div>
-
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {nav.map((g) => (
           <div key={g.group}>
@@ -63,6 +63,7 @@ export function AppSidebar() {
                   <Link
                     key={item.to}
                     to={item.to}
+                    onClick={onNavigate}
                     className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       active
                         ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
@@ -78,7 +79,6 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
-
       <div className="p-3 border-t border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-sidebar-accent/50 cursor-pointer">
           <img src="https://i.pravatar.cc/64?img=5" alt="" className="h-9 w-9 rounded-full ring-2 ring-sidebar-border" />
@@ -89,23 +89,44 @@ export function AppSidebar() {
           <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" />
         </div>
       </div>
+    </>
+  );
+}
+
+export function AppSidebar() {
+  return (
+    <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      <NavContent />
     </aside>
   );
 }
 
 export function AppTopbar({ title, breadcrumb }: { title: string; breadcrumb?: string[] }) {
+  const [open, setOpen] = useState(false);
   return (
-    <header className="h-16 flex items-center justify-between gap-4 px-6 border-b border-border bg-card">
-      <div>
-        {breadcrumb && (
-          <div className="text-xs text-muted-foreground mb-0.5">
-            {breadcrumb.join(" / ")}
-          </div>
-        )}
-        <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+    <header className="h-16 flex items-center justify-between gap-4 px-4 md:px-6 border-b border-border bg-card">
+      <div className="flex items-center gap-3 min-w-0">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <button className="md:hidden h-9 w-9 grid place-items-center rounded-lg hover:bg-muted shrink-0" aria-label="Abrir menu">
+              <Menu className="h-5 w-5" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
+            <NavContent onNavigate={() => setOpen(false)} />
+          </SheetContent>
+        </Sheet>
+        <div className="min-w-0">
+          {breadcrumb && (
+            <div className="text-xs text-muted-foreground mb-0.5 truncate">
+              {breadcrumb.join(" / ")}
+            </div>
+          )}
+          <h1 className="text-base md:text-lg font-semibold tracking-tight truncate">{title}</h1>
+        </div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2 h-10 w-80 px-3 rounded-lg border border-border bg-background">
+        <div className="hidden lg:flex items-center gap-2 h-10 w-80 px-3 rounded-lg border border-border bg-background">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input className="bg-transparent outline-none text-sm flex-1" placeholder="Buscar leads, palestrantes, propostas..." />
           <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">⌘K</kbd>
