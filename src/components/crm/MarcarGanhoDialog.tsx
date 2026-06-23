@@ -86,13 +86,15 @@ export function MarcarGanhoDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-            <Trophy className="h-4 w-4 mr-1.5" /> Marcar Ganho
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger !== null && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+              <Trophy className="h-4 w-4 mr-1.5" /> Marcar Ganho
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Marcar como ganho</DialogTitle>
