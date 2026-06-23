@@ -317,23 +317,11 @@ function MarcarGanhoDialogWrapper({ leadId, onClose }: { leadId: string; onClose
   });
   if (!lead) return null;
   return (
-    <MarcarGanhoAuto lead={lead} onClose={onClose} />
-  );
-}
-
-function MarcarGanhoAuto({ lead, onClose }: { lead: any; onClose: () => void }) {
-  // Auto-open the dialog
-  const [open, setOpen] = useState(true);
-  return (
     <MarcarGanhoDialog
       lead={lead}
-      trigger={<span style={{ display: "none" }} />}
-      key={lead.id}
-      // controlled-ish via inline mount; we rely on dialog open default - using helper trick:
-      {...({ defaultOpen: true } as any)}
-      // ensure close clears wrapper
-      // eslint-disable-next-line
-      onOpenChangeExt={(v: boolean) => { setOpen(v); if (!v) onClose(); }}
+      trigger={null as any}
+      open={true}
+      onOpenChange={(v) => { if (!v) onClose(); }}
     />
   );
 }
