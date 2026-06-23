@@ -10,9 +10,13 @@ import { Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/crm/constants";
 
-export function MarcarGanhoDialog({ lead, trigger }: { lead: any; trigger?: React.ReactNode }) {
+export function MarcarGanhoDialog({
+  lead, trigger, open: openProp, onOpenChange,
+}: { lead: any; trigger?: React.ReactNode; open?: boolean; onOpenChange?: (v: boolean) => void }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => { onOpenChange ? onOpenChange(v) : setOpenState(v); };
   const [sel, setSel] = useState<Record<string, boolean>>({});
 
   const { data: proposta } = useQuery({
