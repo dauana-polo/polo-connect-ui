@@ -81,11 +81,11 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
         ) : (
           <>
             <SheetHeader className="p-6 border-b">
-              <div className="flex items-start justify-between gap-3">
-                <div>
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="min-w-0">
                   <SheetTitle className="text-xl">{lead.empresa}</SheetTitle>
-                  <div className="text-sm text-muted-foreground mt-0.5">{lead.tema_evento ?? "—"}</div>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="text-sm text-muted-foreground mt-0.5 truncate">{lead.tema_evento ?? "—"}</div>
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
                     <Badge variant="secondary">{ETAPA_LABEL[lead.etapa as Etapa]}</Badge>
                     {lead.consultor?.nome && <span className="text-xs text-muted-foreground">Resp.: {lead.consultor.nome}</span>}
                   </div>
@@ -98,6 +98,10 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <NewBusinessWizard lead={lead} />
+                {lead.etapa === "negociacao" && <MarcarGanhoDialog lead={lead} />}
               </div>
             </SheetHeader>
 
