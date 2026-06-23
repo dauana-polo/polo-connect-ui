@@ -41,7 +41,7 @@ export function GerarSugestaoPDF({ propostaId }: { propostaId: string }) {
       container.innerHTML = renderHTML(data);
       document.body.appendChild(container);
 
-      const blob: Blob = await html2pdf()
+      const blob: Blob = await (html2pdf() as any)
         .from(container)
         .set({
           margin: 0,
@@ -49,7 +49,7 @@ export function GerarSugestaoPDF({ propostaId }: { propostaId: string }) {
           image: { type: "jpeg", quality: 0.95 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-          pagebreak: { mode: ["css", "legacy"] } as any,
+          pagebreak: { mode: ["css", "legacy"] },
         })
         .outputPdf("blob");
 
