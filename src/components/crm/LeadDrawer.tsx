@@ -17,6 +17,9 @@ import { toast } from "sonner";
 import {
   ETAPAS, ETAPA_LABEL, STATUS_RECOMENDACAO, TIPOS_ATIVIDADE, formatBRL, type Etapa,
 } from "@/lib/crm/constants";
+import { NewBusinessWizard } from "./NewBusinessWizard";
+import { GerarSugestaoPDF } from "./GerarSugestaoPDF";
+import { MarcarGanhoDialog } from "./MarcarGanhoDialog";
 import {
   Check, Trash2, Plus, Phone, Mail, MessageSquare, Calendar, CheckCircle2,
   Clock, ArrowRight, AlertTriangle, FileText, MessageCircle,
