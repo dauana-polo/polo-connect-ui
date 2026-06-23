@@ -489,6 +489,10 @@ function TabPropostas({ lead }: { lead: Lead }) {
             <div className="mt-2 text-xs text-muted-foreground">
               {p.proposta_palestrantes?.map((pp: any) => pp.palestrante?.nome).filter(Boolean).join(" · ")}
             </div>
+            <div className="mt-2 flex gap-2 flex-wrap">
+              <GerarSugestaoPDF propostaId={p.id} />
+              {p.pdf_sugestao_url && <Badge variant="outline" className="text-[10px]">PDF gerado</Badge>}
+            </div>
           </div>
         ))}
         {propostas.length === 0 && <div className="text-sm text-muted-foreground text-center py-6">Nenhuma proposta criada.</div>}
