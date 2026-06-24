@@ -1,87 +1,124 @@
-# Plano — CRM Comercial Polo Palestrantes
+## Objetivo
 
-Transformar o módulo `/app/crm` em um CRM profissional (estilo Pipedrive/HubSpot) adaptado para venda de palestras, com pipeline kanban, atividades automáticas, recomendações, propostas vinculadas, histórico auditável e disparo automático dos Kanbans operacionais ao fechar a venda.
-
----
-
-## 1. Banco de Dados (migration)
-
-### Ajustes em tabelas existentes
-- `leads`: adicionar coluna `etapa` (enum `lead_etapa`) com as 9 fases do pipeline; `responsavel_id`, `data_evento`, `cidade_evento`, `publico_estimado`, `tema`, `objetivo`, `orcamento_min`, `orcamento_max`, `motivo_perda`.
-- `palestrante_indicacoes` (já existe): expandir com `cache_proposto`, `status` (`pendente|consultado|disponivel|indisponivel|recomendado`), `observacoes`, `ordem`, `disponibilidade_verificada_em`.
-- `propostas`: adicionar `versao`, `lead_id` (FK), `condicoes_comerciais`, `taxas`, `observacoes`.
-- `proposta_palestrantes`: garantir FK obrigatória para `palestrante_indicacoes` (proposta só usa palestrantes recomendados).
-
-### Tabelas novas
-- `crm_atividades` — tipo (`ligacao|email|whatsapp|reuniao|tarefa|followup`), título, descrição, prazo, concluída, concluída_em, responsável, lead_id.
-- `crm_historico` — timeline imutável: lead_id, usuario_id, tipo_evento, descricao, payload jsonb, created_at.
-- `crm_comentarios` — lead_id, usuario_id, texto, created_at.
-- `projetos_operacionais` — criado ao ganhar a venda; agrega referências dos 4 kanbans operacionais.
-
-### Triggers automáticos
-- **`trg_lead_etapa_atividades`**: ao inserir lead OU alterar `etapa`, cria as atividades pré-definidas da etapa correspondente (Contato Recebido, Briefing, Consulta, Negociação com 3 follow-ups, Contratação).
-- **`trg_lead_historico`**: log automático em `crm_historico` para qualquer mudança em `etapa`, `responsavel_id`, `orcamento`, inclusão/remoção de palestrantes recomendados, alteração/criação de proposta.
-- **`trg_lead_ganho_kanbans`**: ao mover para `ganho`, cria registro em `projetos_operacionais` + 4 cards de kanban (CS, Financeiro, Suporte Palestrante, Operação Evento) já populados com cliente, evento, palestrante contratado, cachê.
-
-### RLS
-- Consultor: CRUD nos próprios leads (`responsavel_id = auth.uid()`).
-- Líder e Admin: acesso total via `has_role()`.
+1. Criar uma tela/modal "Venda" para visualizar e salvar dados de uma venda existente (tabela `vendas`).
+2. Refatorar `/app/kanban` para ler dados reais de `kanban_cards` + `vendas` + `clientes` + `palestrantes`, com drag-and-drop, drawer de detalhes, filtros e responsividade mobile.
 
 ---
 
-## 2. Frontend — `/app/crm`
+## 1. Modelo de Venda (formulário de edição)
 
-### Layout
+Criar `src/components/vendas/VendaDrawer.tsx` — Drawer/Sheet lateral reutilizável que carrega uma venda por `id` e permite editar e salvar.
+
+Campos editáveis (com base na tabela `vendas`):
+- Título, data_evento, cidade, formato, publico_estimado
+- Briefing (textarea), observacoes
+- Valor_total, cache_palestr
+- Status: select (`ativo` | `suspenso` | `concluido` | `cancelado`)
+- Read-only: cliente (nome), palestrante (nome), consultor, proposta vinculada
+
+Comportamento:
+- Carrega via `supabase.from('vendas').select('*, clientes(nome), palestrantes(nome), usuarios(nome)').eq('id', id).single()`
+- Botão **Salvar** faz `update` em `vendas` com os campos editáveis
+- Toast de confirmação
+- Botões de atalho: "Abrir no Jurídico", "Abrir no Financeiro", "Abrir Logística" (navegam para o setor correspondente do Kanban filtrado por essa venda)
+
+---
+
+## 2. Refatoração do Kanban (`src/routes/app.kanban.tsx`)
+
+### Estrutura de dados
+
+Constante `SETORES` definindo as 5 abas e suas colunas (alinhadas ao enunciado):
+
 ```text
-┌─ Header: filtros (responsável, período) + botão "Novo Lead" + toggle Kanban/Lista
-├─ Dashboard (cards de KPIs no topo, colapsável)
-└─ Pipeline Kanban (9 colunas, drag-and-drop)
+pos_venda  → entrada | briefing_solicitado | briefing_recebido | concluido
+juridico   → entrada | contrato_gerado | enviado_assinatura | assinado | concluido
+financeiro → entrada | aguardando_pagamento | recebido_parcial | recebido_total | concluido
+logistica  → entrada | passagens | hospedagem | transfer | checklist_ok
+palestrante→ entrada | contrato_enviado | confirmado | briefing_lido | ok
 ```
 
-### Componentes principais
-- `CrmPipeline.tsx` — board com 9 colunas; drag-and-drop muda `etapa` (dispara triggers).
-- `LeadCard.tsx` — card resumo (cliente, valor, palestrante destaque, atividades pendentes, dias na etapa).
-- `LeadDrawer.tsx` — drawer lateral ao clicar no card, com abas:
-  - **Detalhes** — campos editáveis conforme etapa (briefing exige campos obrigatórios).
-  - **Recomendações** — adicionar/remover palestrantes (busca em `palestrantes`), cachê, status, obs.
-  - **Consultas** — para cada recomendado: botões "Consultar agenda/cachê/disponibilidade", muda status.
-  - **Propostas** — lista de propostas com versões; criar nova só permite selecionar palestrantes que estão na aba Recomendações.
-  - **Atividades** — pendentes/concluídas, criar manualmente (ligação, email, WhatsApp, reunião).
-  - **Comentários** — chat interno.
-  - **Timeline** — `crm_historico` em ordem cronológica.
-- `CrmDashboard.tsx` — KPIs: leads recebidos, briefings, propostas, taxa de conversão, ganhos/perdidos, valor em negociação, valor ganho, ticket médio, conversão por consultor/palestrante, tempo médio por etapa.
+Cada coluna tem `key` (valor salvo em `kanban_cards.coluna`) e `label` (exibido).
 
-### Regras de UI
-- Botão "Criar Proposta" desabilitado se não houver palestrantes recomendados.
-- Modal de proposta lista apenas palestrantes presentes em `palestrante_indicacoes` do lead.
-- Mover card para "Ganho" abre confirmação que mostra o que será criado nos kanbans operacionais.
-- Mover para "Perdido" exige `motivo_perda`.
-- Campos obrigatórios da etapa 2 são validados antes de avançar para etapa 3+.
+### Query principal
 
-### Permissões (UI + RLS)
-- Consultor: cria/edita seus cards e propostas.
-- Líder: tudo do consultor + reatribuir responsável + aprovar exceções (override de regras).
-- Admin: tudo.
+```ts
+supabase
+  .from('kanban_cards')
+  .select(`
+    id, setor, coluna, posicao, notas,
+    vendas (
+      id, titulo, data_evento, valor_total, status,
+      clientes (nome),
+      palestrantes (nome),
+      consultor_id
+    )
+  `)
+  .eq('setor', setorAtivo)
+```
+
+Aplica filtros client-side (período/consultor/palestrante/cliente). Reagrupa por `coluna`.
+
+### Abas (desktop) / Dropdown (mobile)
+
+- `< md`: `<Select>` shadcn para escolher setor
+- `>= md`: `<Tabs>` com 5 triggers
+
+### Cards
+
+Cada card mostra:
+- Título do evento (`vendas.titulo`)
+- Cliente (`clientes.nome`)
+- Palestrante (`palestrantes.nome`)
+- Data (formatada pt-BR) + valor (R$)
+- Borda colorida por `vendas.status`:
+  - `ativo` → `border-l-4 border-blue-500`
+  - `suspenso` → `border-l-4 border-yellow-500`
+  - `concluido` → `border-l-4 border-green-500`
+
+### Drag-and-drop
+
+Implementação nativa HTML5 (sem libs):
+- `draggable`, `onDragStart` (guarda `cardId`), `onDragOver` (preventDefault), `onDrop` na coluna
+- Ao soltar: `update kanban_cards set coluna = X where id = cardId`
+- Optimistic update local + `toast.success("Card movido para {coluna}")`
+- Em caso de erro: reverte e `toast.error`
+
+### Layout responsivo das colunas
+
+- Desktop (`>= lg`): grid horizontal com todas as colunas visíveis (`grid-cols-N`)
+- Tablet (`md`): scroll horizontal
+- Mobile (`< md`): exibe uma coluna por vez, com header `< Coluna X / Y >` e botões prev/next para navegar; drag desabilitado (substituído por botão "Mover para..." dentro de cada card)
+
+### Drawer de detalhes
+
+Clique no card abre `<VendaDrawer vendaId={...}/>` (componente criado na seção 1) + um campo extra **Notas do card** (textarea ligado a `kanban_cards.notas`) com botão "Salvar nota" → `update kanban_cards set notas = ...`.
+
+### Filtros
+
+Barra acima do board:
+- Período (select: 7/30/90 dias / todos) → filtra por `vendas.data_evento`
+- Consultor (select alimentado por `usuarios` perfil=comercial)
+- Palestrante (select alimentado por `palestrantes`)
+- Cliente (select alimentado por `clientes`)
+
+Filtros aplicados client-side sobre os dados carregados.
 
 ---
 
-## 3. Detalhes técnicos
+## Detalhes técnicos
 
-- **Stack**: TanStack Start + Query + Supabase client browser (RLS escopa por perfil).
-- **Drag-and-drop**: `@dnd-kit/core` (já no projeto, senão adiciono).
-- **Loaders**: `ensureQueryData` para leads + `useSuspenseQuery` no componente.
-- **Mutations**: `useMutation` com `queryClient.invalidateQueries` para o pipeline e timeline.
-- **Realtime opcional**: deixar fora desta entrega; recarrega ao focar.
-- **Triggers SQL** garantem atividades, histórico e kanbans automáticos — frontend só dispara update de `etapa`/insert de lead; consistência fica no banco.
+- Toast: usar `sonner` (`import { toast } from "sonner"`)
+- Drawer: `<Sheet>` de `@/components/ui/sheet`
+- Select: `@/components/ui/select`
+- Sem novas dependências
+- Sem mudanças de schema (tabelas e colunas já existem: `kanban_cards.coluna`, `kanban_cards.notas`, `vendas.status`, etc.)
+- Real-time opcional: subscription em `kanban_cards` filtrada por setor para sincronizar movimentos entre usuários (incluir como `useEffect` com `supabase.channel`)
 
----
+## Arquivos afetados
 
-## 4. Entrega em fases
-
-1. **Migration** (tabelas, colunas, triggers, RLS, grants) — aprovação primeiro.
-2. **Pipeline Kanban + LeadDrawer (abas Detalhes, Recomendações, Atividades, Timeline, Comentários)**.
-3. **Aba Consultas + Aba Propostas (com regra de palestrantes recomendados)**.
-4. **Dashboard de KPIs**.
-5. **Confirmação visual da etapa "Ganho" + verificação dos kanbans operacionais criados**.
-
-Cada fase é validada antes de seguir para a próxima. Posso começar pela migration assim que você aprovar este plano.
+- **Criar** `src/components/vendas/VendaDrawer.tsx`
+- **Criar** `src/components/kanban/KanbanCard.tsx`
+- **Criar** `src/components/kanban/KanbanFilters.tsx`
+- **Criar** `src/components/kanban/constants.ts` (SETORES)
+- **Reescrever** `src/routes/app.kanban.tsx`
