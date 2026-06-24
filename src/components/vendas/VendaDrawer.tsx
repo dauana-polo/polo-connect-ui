@@ -47,7 +47,7 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
     supabase
       .from("vendas")
       .select(
-        "id, titulo, data_evento, cidade, formato, publico_estimado, briefing, valor_total, cache_palestr, status, proposta_id, clientes(nome), palestrantes(nome), usuarios:consultor_id(nome)"
+        "id, titulo, data_evento, cidade, formato, publico_estimado, briefing, valor_total, cache_palestr, status, proposta_id, clientes(nome:razao_social), palestrantes(nome), usuarios:consultor_id(nome)"
       )
       .eq("id", vendaId)
       .single()

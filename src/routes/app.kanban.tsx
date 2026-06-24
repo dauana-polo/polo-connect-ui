@@ -49,7 +49,7 @@ function KanbanMulti() {
       .then(({ data }) => setConsultores(data ?? []));
     supabase.from("palestrantes").select("id, nome").order("nome")
       .then(({ data }) => setPalestrantes(data ?? []));
-    supabase.from("clientes").select("id, nome").order("nome")
+    supabase.from("clientes").select("id, nome:razao_social").order("razao_social")
       .then(({ data }) => setClientes(data ?? []));
   }, []);
 
@@ -59,7 +59,7 @@ function KanbanMulti() {
     const { data, error } = await supabase
       .from("kanban_cards")
       .select(
-        "id, coluna, notas, vendas(id, titulo, data_evento, valor_total, status, consultor_id, palestrante_id, cliente_id, clientes(nome), palestrantes(nome))"
+        "id, coluna, notas, vendas(id, titulo, data_evento, valor_total, status, consultor_id, palestrante_id, cliente_id, clientes(nome:razao_social), palestrantes(nome))"
       )
       .eq("setor", setor);
     if (error) toast.error("Erro ao carregar cards");
