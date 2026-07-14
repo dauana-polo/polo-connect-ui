@@ -29,10 +29,17 @@ interface VendaRow {
   valor_total: number;
   cache_palestr: number;
   status: string | null;
+  empresa_polo_id: string | null;
   clientes: { nome: string } | null;
   palestrantes: { nome: string } | null;
   usuarios: { nome: string } | null;
   proposta_id: string | null;
+}
+
+interface EmpresaOption {
+  id: string;
+  razao_social: string;
+  nome_fantasia: string | null;
 }
 
 export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }: Props) {
@@ -40,6 +47,7 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<VendaRow | null>(null);
+  const [empresas, setEmpresas] = useState<EmpresaOption[]>([]);
 
   useEffect(() => {
     if (!open || !vendaId) return;
@@ -47,7 +55,7 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
     supabase
       .from("vendas")
       .select(
-        "id, titulo, data_evento, cidade, formato, publico_estimado, briefing, valor_total, cache_palestr, status, proposta_id, clientes(nome:razao_social), palestrantes(nome), usuarios:consultor_id(nome)"
+        "id, titulo, data_evento, cidade, formato, publico_estimado, briefing, valor_total, cache_palestr, status, empresa_polo_id, proposta_id, clientes(nome:razao_social), palestrantes(nome), usuarios:consultor_id(nome)"
       )
       .eq("id", vendaId)
       .single()
@@ -57,6 +65,18 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
         setLoading(false);
       });
   }, [vendaId, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    supabase
+      .from("empresas_polo")
+      .select("id, razao_social, nome_fantasia")
+      .eq("ativo", true)
+      .order("razao_social")
+      .then(({ data, error }) => {
+        if (!error) setEmpresas((data ?? []) as EmpresaOption[]);
+      });
+  }, [open]);
 
   const update = <K extends keyof VendaRow>(k: K, v: VendaRow[K]) => {
     setData((d) => (d ? { ...d, [k]: v } : d));
@@ -77,6 +97,7 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
         valor_total: data.valor_total,
         cache_palestr: data.cache_palestr,
         status: data.status,
+        empresa_polo_id: data.empresa_polo_id,
       })
       .eq("id", data.id);
     setSaving(false);
@@ -182,6 +203,20 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
                     onChange={(e) => update("cache_palestr", Number(e.target.value))}
                   />
                 </div>
+              </div>
+              <div>
+                <Label>Empresa emissora</Label>
+                <Select
+                  value={data.empresa_polo_id ?? ""}
+                  onValueChange={(v) => update("empresa_polo_id", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
+                  <SelectContent>
+                    {empresas.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{e.nome_fantasia || e.razao_social}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Status</Label>

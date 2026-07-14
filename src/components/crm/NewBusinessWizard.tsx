@@ -21,9 +21,13 @@ type Pal = {
   exclusivo: boolean | null; temas: string[] | null; formatos: string[] | null;
 };
 
-export function NewBusinessWizard({ lead, trigger }: { lead: any; trigger?: React.ReactNode }) {
+export function NewBusinessWizard({
+  lead, trigger, open: openProp, onOpenChange, onCreated,
+}: { lead: any; trigger?: React.ReactNode | null; open?: boolean; onOpenChange?: (v: boolean) => void; onCreated?: () => void }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => { onOpenChange ? onOpenChange(v) : setOpenState(v); };
   const [step, setStep] = useState(1);
   const [busca, setBusca] = useState("");
   const [filtroTema, setFiltroTema] = useState("");
@@ -143,19 +147,22 @@ export function NewBusinessWizard({ lead, trigger }: { lead: any; trigger?: Reac
       qc.invalidateQueries({ queryKey: ["lead", lead.id] });
       qc.invalidateQueries({ queryKey: ["lead-propostas", lead.id] });
       qc.invalidateQueries({ queryKey: ["lead-recs", lead.id] });
+      onCreated?.();
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setStep(1); setSel({}); } }}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button size="sm" variant="outline">
-            <Briefcase className="h-4 w-4 mr-1.5" /> Novo Negócio
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger !== null && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button size="sm" variant="outline">
+              <Briefcase className="h-4 w-4 mr-1.5" /> Novo Negócio
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Negócio — passo {step} de 3</DialogTitle>
