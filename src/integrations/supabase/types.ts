@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          acao: string
+          created_at: string
+          dados_antes: Json | null
+          dados_depois: Json | null
+          entidade: string
+          entidade_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          entidade: string
+          entidade_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          entidade?: string
+          entidade_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       checklist_itens: {
         Row: {
           checklist_id: string | null
@@ -1145,6 +1178,39 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean
+          link: string | null
+          mensagem: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo?: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nps_respostas: {
         Row: {
           comentario: string | null
@@ -1529,6 +1595,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       usuarios: {
         Row: {
           ativo: boolean | null
@@ -1709,12 +1796,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin_or_gestor: { Args: never; Returns: boolean }
       meu_perfil: { Args: never; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin"
+        | "gestor"
+        | "comercial"
+        | "pos_venda"
+        | "juridico"
+        | "financeiro"
+        | "logistica"
+        | "palestrante"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1841,6 +1944,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin",
+        "gestor",
+        "comercial",
+        "pos_venda",
+        "juridico",
+        "financeiro",
+        "logistica",
+        "palestrante",
+      ],
+    },
   },
 } as const
