@@ -1,11 +1,15 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   LayoutDashboard, Users, FileText, Kanban, DollarSign, Scale,
-  Settings, Mic2, Search, Bell, ChevronDown, Sparkles,
-  Plane, ClipboardCheck, Building2, TrendingUp, UserCog, Wallet, PieChart, Menu,
+  Settings, Mic2, Search, ChevronDown, Sparkles,
+  Plane, ClipboardCheck, Building2, TrendingUp, UserCog, Wallet, PieChart, Menu, LogOut,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/NotificationBell";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const nav = [
   { group: "Principal", items: [
@@ -79,17 +83,44 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ))}
       </nav>
-      <div className="p-3 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-sidebar-accent/50 cursor-pointer">
-          <img src="https://i.pravatar.cc/64?img=5" alt="" className="h-9 w-9 rounded-full ring-2 ring-sidebar-border" />
-          <div className="flex-1 leading-tight min-w-0">
-            <div className="text-sm font-medium truncate">Roberto Dias</div>
-            <div className="text-[11px] text-sidebar-foreground/50 truncate">Administrador</div>
-          </div>
-          <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" />
-        </div>
-      </div>
+      <UserFooter />
     </>
+  );
+}
+
+function UserFooter() {
+  const { user, roles } = useAuth();
+  const navigate = useNavigate();
+  const nome = (user?.user_metadata?.name as string) || user?.email?.split("@")[0] || "Usuário";
+  const perfil = roles[0] ?? "—";
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+  return (
+    <div className="p-3 border-t border-sidebar-border">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-sidebar-accent/50">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 grid place-items-center text-white text-sm font-semibold ring-2 ring-sidebar-border">
+              {nome.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 leading-tight min-w-0 text-left">
+              <div className="text-sm font-medium truncate">{nome}</div>
+              <div className="text-[11px] text-sidebar-foreground/50 truncate capitalize">{perfil.replace("_", " ")}</div>
+            </div>
+            <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="truncate">{user?.email}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="h-4 w-4 mr-2" />Sair
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
@@ -131,10 +162,7 @@ export function AppTopbar({ title, breadcrumb }: { title: string; breadcrumb?: s
           <input className="bg-transparent outline-none text-sm flex-1" placeholder="Buscar leads, palestrantes, propostas..." />
           <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">⌘K</kbd>
         </div>
-        <button className="relative h-10 w-10 grid place-items-center rounded-lg hover:bg-muted">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-card" />
-        </button>
+        <NotificationBell />
       </div>
     </header>
   );
