@@ -14,6 +14,7 @@ import { Route as PortalRouteImport } from './routes/portal'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
 import { Route as InstitucionalRouteImport } from './routes/institucional'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
@@ -56,6 +57,11 @@ const InstitucionalRoute = InstitucionalRouteImport.update({
 const CatalogoRoute = CatalogoRouteImport.update({
   id: '/catalogo',
   path: '/catalogo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -152,6 +158,7 @@ const AppAdminRoute = AppAdminRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/catalogo': typeof CatalogoRoute
   '/institucional': typeof InstitucionalRoute
   '/orcamento': typeof OrcamentoRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/catalogo': typeof CatalogoRoute
   '/institucional': typeof InstitucionalRoute
   '/orcamento': typeof OrcamentoRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/catalogo': typeof CatalogoRoute
   '/institucional': typeof InstitucionalRoute
   '/orcamento': typeof OrcamentoRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/auth'
     | '/catalogo'
     | '/institucional'
     | '/orcamento'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/catalogo'
     | '/institucional'
     | '/orcamento'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/auth'
     | '/catalogo'
     | '/institucional'
     | '/orcamento'
@@ -302,6 +314,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
   CatalogoRoute: typeof CatalogoRoute
   InstitucionalRoute: typeof InstitucionalRoute
   OrcamentoRoute: typeof OrcamentoRoute
@@ -345,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/catalogo'
       fullPath: '/catalogo'
       preLoaderRoute: typeof CatalogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -526,6 +546,7 @@ const PortalRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
   CatalogoRoute: CatalogoRoute,
   InstitucionalRoute: InstitucionalRoute,
   OrcamentoRoute: OrcamentoRoute,
