@@ -303,10 +303,12 @@ function VendasPage() {
                   )}
                 </div>
 
-                <Button className="w-full" onClick={() => setDrawerId(v.id)}>
-                  <Pencil className="h-4 w-4 mr-1.5" />
-                  Editar venda
-                </Button>
+                <Can resource="vendas" action="edit">
+                  <Button className="w-full" onClick={() => setDrawerId(v.id)}>
+                    <Pencil className="h-4 w-4 mr-1.5" />
+                    Editar venda
+                  </Button>
+                </Can>
               </div>
             </Card>
           </div>
