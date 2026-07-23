@@ -27,20 +27,25 @@ const ORIGENS = [
 
 const schema = z.object({
   empresa: requiredString("Empresa"),
-  cliente_id: z.string().optional().default(""),
-  contato_nome: z.string().trim().max(150).optional().default(""),
-  contato_email: optionalEmail.default(""),
-  contato_tel: phoneSchema.optional().default(""),
-  tema_evento: z.string().trim().max(200).optional().default(""),
-  data_pretendida: isoDateSchema.optional().default(""),
-  cidade_evento: z.string().trim().max(120).optional().default(""),
-  formato: z.string().optional().default(""),
+  cliente_id: z.string(),
+  contato_nome: z.string().trim().max(150),
+  contato_email: z.string().trim().max(255).refine(
+    (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "E-mail inválido",
+  ),
+  contato_tel: z.string().trim().refine(
+    (v) => !v || [10, 11].includes(v.replace(/\D/g, "").length), "Telefone inválido",
+  ),
+  tema_evento: z.string().trim().max(200),
+  data_pretendida: z.string().trim().refine(
+    (v) => !v || !Number.isNaN(new Date(v).getTime()), "Data inválida",
+  ),
+  cidade_evento: z.string().trim().max(120),
+  formato: z.string(),
   orcamento_est: z.string().trim().refine(
-    (v) => !v || (Number.isFinite(Number(v)) && Number(v) >= 0),
-    "Orçamento inválido",
-  ).optional().default(""),
-  origem: z.string().min(1).default("ativo"),
-  descricao: z.string().trim().max(2000).optional().default(""),
+    (v) => !v || (Number.isFinite(Number(v)) && Number(v) >= 0), "Orçamento inválido",
+  ),
+  origem: z.string().min(1),
+  descricao: z.string().trim().max(2000),
 });
 
 type FormValues = z.infer<typeof schema>;
