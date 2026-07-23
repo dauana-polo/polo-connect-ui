@@ -82,12 +82,32 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
       });
   }, [open]);
 
+  const { can } = usePermissions();
+  const canEdit = can("vendas", "edit");
+
   const update = <K extends keyof VendaRow>(k: K, v: VendaRow[K]) => {
     setData((d) => (d ? { ...d, [k]: v } : d));
   };
 
+  const vendaSchema = z.object({
+    titulo: requiredString("Título"),
+    data_evento: isoDateSchema.optional().or(z.literal("")),
+    valor_total: moneySchema,
+    cache_palestr: moneySchema,
+  });
+
   const handleSave = async () => {
     if (!data) return;
+    const parsed = vendaSchema.safeParse({
+      titulo: data.titulo ?? "",
+      data_evento: data.data_evento ?? "",
+      valor_total: data.valor_total ?? 0,
+      cache_palestr: data.cache_palestr ?? 0,
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
+      return;
+    }
     setSaving(true);
 
     // Conflict check: same palestrante + same data_evento on other active vendas
