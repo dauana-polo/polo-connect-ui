@@ -49,6 +49,22 @@ export function MarcarGanhoDialog({
       const escolhidos = palestrantes.filter((pp) => sel[pp.id]);
       if (escolhidos.length === 0) throw new Error("Selecione ao menos 1 palestrante.");
 
+      // Conflict check: same palestrante, same data_evento, status != cancelado
+      if (lead.data_pretendida) {
+        const ids = escolhidos.map((pp: any) => pp.palestrante_id);
+        const { data: conflitos, error: eConf } = await supabase
+          .from("vendas")
+          .select("palestrante_id, palestrantes(nome)")
+          .in("palestrante_id", ids)
+          .eq("data_evento", lead.data_pretendida)
+          .neq("status", "cancelado");
+        if (eConf) throw eConf;
+        if (conflitos && conflitos.length > 0) {
+          const nomes = Array.from(new Set(conflitos.map((c: any) => c.palestrantes?.nome).filter(Boolean))).join(", ");
+          throw new Error(`Conflito de agenda em ${lead.data_pretendida}: ${nomes || "palestrante"} já possui evento nesta data.`);
+        }
+      }
+
       // Insert 1 venda per selected palestrante; triggers create kanban_cards + logistica + nps automatically
       const rows = escolhidos.map((pp: any) => ({
         proposta_id: proposta.id,
