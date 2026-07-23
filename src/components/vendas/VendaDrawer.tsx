@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Can } from "@/components/shared/Can";
+import { usePermissions } from "@/hooks/usePermissions";
+import { requiredString, isoDateSchema, moneySchema } from "@/lib/validators";
 
 interface Props {
   vendaId: string | null;
@@ -78,12 +82,32 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
       });
   }, [open]);
 
+  const { can } = usePermissions();
+  const canEdit = can("vendas", "edit");
+
   const update = <K extends keyof VendaRow>(k: K, v: VendaRow[K]) => {
     setData((d) => (d ? { ...d, [k]: v } : d));
   };
 
+  const vendaSchema = z.object({
+    titulo: requiredString("Título"),
+    data_evento: isoDateSchema.optional().or(z.literal("")),
+    valor_total: moneySchema,
+    cache_palestr: moneySchema,
+  });
+
   const handleSave = async () => {
     if (!data) return;
+    const parsed = vendaSchema.safeParse({
+      titulo: data.titulo ?? "",
+      data_evento: data.data_evento ?? "",
+      valor_total: data.valor_total ?? 0,
+      cache_palestr: data.cache_palestr ?? 0,
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
+      return;
+    }
     setSaving(true);
 
     // Conflict check: same palestrante + same data_evento on other active vendas
@@ -270,7 +294,9 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+              <Can resource="vendas" action="edit">
+                <Button onClick={handleSave} disabled={saving || !canEdit}>{saving ? "Salvando…" : "Salvar"}</Button>
+              </Can>
             </div>
           </div>
         )}
