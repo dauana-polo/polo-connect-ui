@@ -37,6 +37,9 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
   const qc = useQueryClient();
   const open = !!leadId;
 
+  const { can } = usePermissions();
+  const canEdit = can("crm", "edit");
+
   const { data: lead } = useQuery({
     queryKey: ["lead", leadId],
     enabled: open,
