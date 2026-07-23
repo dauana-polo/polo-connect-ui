@@ -510,6 +510,7 @@ function TabPropostas({ lead }: { lead: Lead }) {
             <DialogFooter><Button onClick={() => criar.mutate()} disabled={criar.isPending}>Criar proposta</Button></DialogFooter>
           </DialogContent>
         </Dialog>
+        </Can>
       </div>
       <div className="space-y-2">
         {propostas.map((p) => (
