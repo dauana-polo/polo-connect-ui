@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { palestrantes } from "@/lib/mock-data";
-import { ArrowRight, ArrowUpRight, Award, BadgeCheck, Building2, Compass, Layers, MessagesSquare, Play, Quote, Sparkle, Star, Target, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowRight, ArrowUpRight, BadgeCheck, Building2, Compass, Layers, MessagesSquare, Play, Quote, Sparkle, Star, Target, UserRound } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
@@ -17,6 +18,15 @@ export const Route = createFileRoute("/")({
   }),
   component: Home,
 });
+
+type Destaque = {
+  id: string;
+  nome: string;
+  foto_url: string | null;
+  temas: string[] | null;
+  avaliacao_media: number | null;
+  total_eventos: number | null;
+};
 
 const logos = ["Itaú", "Vale", "Magazine Luiza", "Natura", "Ambev", "XP Inc", "Bradesco", "Stone"];
 const areas = ["Liderança", "Cultura", "Inovação", "Vendas", "ESG", "Alta Performance", "Tecnologia", "Comunicação"];
