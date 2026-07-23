@@ -381,10 +381,12 @@ export type Database = {
       contas_pagar: {
         Row: {
           beneficiario: string | null
+          categoria: string | null
           created_at: string | null
           descricao: string
           empresa_id: string | null
           forma_pgto: string | null
+          fornecedor: string | null
           id: string
           observacao: string | null
           pago_em: string | null
@@ -397,10 +399,12 @@ export type Database = {
         }
         Insert: {
           beneficiario?: string | null
+          categoria?: string | null
           created_at?: string | null
           descricao: string
           empresa_id?: string | null
           forma_pgto?: string | null
+          fornecedor?: string | null
           id?: string
           observacao?: string | null
           pago_em?: string | null
@@ -413,10 +417,12 @@ export type Database = {
         }
         Update: {
           beneficiario?: string | null
+          categoria?: string | null
           created_at?: string | null
           descricao?: string
           empresa_id?: string | null
           forma_pgto?: string | null
+          fornecedor?: string | null
           id?: string
           observacao?: string | null
           pago_em?: string | null
@@ -453,6 +459,7 @@ export type Database = {
       }
       contas_receber: {
         Row: {
+          categoria: string | null
           created_at: string | null
           empresa_id: string | null
           forma_pgto: string | null
@@ -468,6 +475,7 @@ export type Database = {
           venda_id: string | null
         }
         Insert: {
+          categoria?: string | null
           created_at?: string | null
           empresa_id?: string | null
           forma_pgto?: string | null
@@ -483,6 +491,7 @@ export type Database = {
           venda_id?: string | null
         }
         Update: {
+          categoria?: string | null
           created_at?: string | null
           empresa_id?: string | null
           forma_pgto?: string | null
@@ -2043,6 +2052,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atualizar_status_contas: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
