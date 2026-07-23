@@ -264,8 +264,7 @@ function CRM() {
             );
           })}
         </div>
-
-        {isLoading && <div className="text-sm text-muted-foreground">Carregando…</div>}
+        </>)}
       </div>
 
       <LeadDrawer leadId={openLeadId} onClose={() => setOpenLeadId(null)} />
