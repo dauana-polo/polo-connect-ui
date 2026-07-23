@@ -99,7 +99,7 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
                     {lead.consultor?.nome && <span className="text-xs text-muted-foreground">Resp.: {lead.consultor.nome}</span>}
                   </div>
                 </div>
-                <Select value={lead.etapa} onValueChange={(v) => moverEtapa.mutate(v as Etapa)}>
+                <Select value={lead.etapa} disabled={!canEdit} onValueChange={(v) => moverEtapa.mutate(v as Etapa)}>
                   <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {ETAPAS.map((e) => (
@@ -108,10 +108,12 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <NewBusinessWizard lead={lead} />
-                {lead.etapa === "negociacao" && <MarcarGanhoDialog lead={lead} />}
-              </div>
+              <Can resource="crm" action="edit">
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <NewBusinessWizard lead={lead} />
+                  {lead.etapa === "negociacao" && <MarcarGanhoDialog lead={lead} />}
+                </div>
+              </Can>
             </SheetHeader>
 
             <Tabs defaultValue="detalhes" className="px-6 py-4">
