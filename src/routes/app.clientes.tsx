@@ -421,22 +421,15 @@ function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (
   );
 }
 
-const FieldRegister = (() => {
-  const Cmp = (
-    { label, error, ...rest }: { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>,
-    ref: React.Ref<HTMLInputElement>,
-  ) => (
+const FieldRegister = forwardRef<
+  HTMLInputElement,
+  { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>
+>(function FieldRegister({ label, error, ...rest }, ref) {
+  return (
     <div>
       <Label className="text-xs">{label}</Label>
       <Input ref={ref} {...rest} />
       {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
     </div>
   );
-  return Object.assign(
-    // eslint-disable-next-line react/display-name
-    require("react").forwardRef(Cmp),
-    { displayName: "FieldRegister" },
-  ) as React.ForwardRefExoticComponent<
-    { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement> & React.RefAttributes<HTMLInputElement>
-  >;
-})();
+});
