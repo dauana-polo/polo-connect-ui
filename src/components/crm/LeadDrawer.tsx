@@ -143,30 +143,55 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
 }
 
 /* ============ Tab: Detalhes ============ */
+const detalhesSchema = z.object({
+  empresa: requiredString("Empresa"),
+  contato_nome: z.string().trim().optional(),
+  contato_email: optionalEmail,
+  contato_tel: phoneSchema.optional().or(z.literal("")),
+  tema_evento: z.string().trim().optional(),
+  data_pretendida: isoDateSchema.optional().or(z.literal("")),
+  cidade_evento: z.string().trim().optional(),
+  formato: z.string().trim().optional(),
+  publico_estimado: z.string().trim().optional(),
+  orcamento_est: z.string().trim().optional(),
+  orcamento_min: z.string().trim().optional(),
+  orcamento_max: z.string().trim().optional(),
+  objetivo: z.string().trim().optional(),
+  descricao: z.string().trim().optional(),
+});
+type DetalhesForm = z.infer<typeof detalhesSchema>;
+
 function TabDetalhes({ lead }: { lead: Lead }) {
   const qc = useQueryClient();
-  const [form, setForm] = useState({
-    empresa: lead.empresa ?? "",
-    contato_nome: lead.contato_nome ?? "",
-    contato_email: lead.contato_email ?? "",
-    contato_tel: lead.contato_tel ?? "",
-    tema_evento: lead.tema_evento ?? "",
-    data_pretendida: lead.data_pretendida ?? "",
-    cidade_evento: lead.cidade_evento ?? "",
-    formato: lead.formato ?? "",
-    publico_estimado: lead.publico_estimado ?? "",
-    orcamento_est: lead.orcamento_est ?? "",
-    orcamento_min: lead.orcamento_min ?? "",
-    orcamento_max: lead.orcamento_max ?? "",
-    objetivo: lead.objetivo ?? "",
-    descricao: lead.descricao ?? "",
+  const { can } = usePermissions();
+  const canEdit = can("crm", "edit");
+
+  const form = useForm<DetalhesForm>({
+    resolver: zodResolver(detalhesSchema),
+    defaultValues: {
+      empresa: lead.empresa ?? "",
+      contato_nome: lead.contato_nome ?? "",
+      contato_email: lead.contato_email ?? "",
+      contato_tel: lead.contato_tel ?? "",
+      tema_evento: lead.tema_evento ?? "",
+      data_pretendida: lead.data_pretendida ?? "",
+      cidade_evento: lead.cidade_evento ?? "",
+      formato: lead.formato ?? "",
+      publico_estimado: lead.publico_estimado != null ? String(lead.publico_estimado) : "",
+      orcamento_est: lead.orcamento_est != null ? String(lead.orcamento_est) : "",
+      orcamento_min: lead.orcamento_min != null ? String(lead.orcamento_min) : "",
+      orcamento_max: lead.orcamento_max != null ? String(lead.orcamento_max) : "",
+      objetivo: lead.objetivo ?? "",
+      descricao: lead.descricao ?? "",
+    },
   });
+  const errors = form.formState.errors;
 
   const salvar = useMutation({
-    mutationFn: async () => {
-      const payload: any = { ...form };
-      ["publico_estimado", "orcamento_est", "orcamento_min", "orcamento_max"].forEach((k) => {
-        payload[k] = payload[k] === "" ? null : Number(payload[k]);
+    mutationFn: async (values: DetalhesForm) => {
+      const payload: any = { ...values };
+      (["publico_estimado", "orcamento_est", "orcamento_min", "orcamento_max"] as const).forEach((k) => {
+        payload[k] = payload[k] === "" || payload[k] == null ? null : Number(payload[k]);
       });
       if (!payload.data_pretendida) payload.data_pretendida = null;
       if (!payload.formato) payload.formato = null;
@@ -181,30 +206,28 @@ function TabDetalhes({ lead }: { lead: Lead }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const field = (k: keyof typeof form, label: string, type = "text") => (
+  const field = (k: keyof DetalhesForm, label: string, type = "text") => (
     <div className="space-y-1">
       <Label className="text-xs">{label}</Label>
-      <Input type={type} value={form[k] as any} onChange={(e) => setForm({ ...form, [k]: e.target.value })} />
+      <Input type={type} disabled={!canEdit} {...form.register(k)} />
+      {errors[k] && <p className="text-[11px] text-rose-500">{errors[k]?.message as string}</p>}
     </div>
   );
 
   return (
-    <div className="space-y-3 pt-2">
+    <form onSubmit={form.handleSubmit((v) => salvar.mutate(v))} className="space-y-3 pt-2">
       <div className="grid grid-cols-2 gap-3">
         {field("empresa", "Empresa")}
         {field("contato_nome", "Contato")}
         {field("contato_email", "E-mail", "email")}
         {field("contato_tel", "Telefone")}
         {field("tema_evento", "Tema")}
-        <div className="space-y-1">
-          <Label className="text-xs">Objetivo</Label>
-          <Input value={form.objetivo} onChange={(e) => setForm({ ...form, objetivo: e.target.value })} />
-        </div>
+        {field("objetivo", "Objetivo")}
         {field("data_pretendida", "Data do evento", "date")}
         {field("cidade_evento", "Cidade")}
         <div className="space-y-1">
           <Label className="text-xs">Formato</Label>
-          <Select value={form.formato} onValueChange={(v) => setForm({ ...form, formato: v })}>
+          <Select value={form.watch("formato") ?? ""} disabled={!canEdit} onValueChange={(v) => form.setValue("formato", v, { shouldDirty: true })}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="presencial">Presencial</SelectItem>
@@ -220,10 +243,12 @@ function TabDetalhes({ lead }: { lead: Lead }) {
       </div>
       <div className="space-y-1">
         <Label className="text-xs">Descrição</Label>
-        <Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} rows={3} />
+        <Textarea disabled={!canEdit} {...form.register("descricao")} rows={3} />
       </div>
-      <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>Salvar</Button>
-    </div>
+      <Can resource="crm" action="edit">
+        <Button type="submit" disabled={salvar.isPending}>Salvar</Button>
+      </Can>
+    </form>
   );
 }
 
