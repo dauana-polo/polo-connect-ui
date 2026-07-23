@@ -26,8 +26,12 @@ export async function getCliente(id: string) {
   return unwrap<Cliente>(await supabase.from("clientes").select("*").eq("id", id).single());
 }
 
-export async function upsertCliente(patch: Partial<Cliente> & { id?: string }) {
-  const { data, error } = await supabase.from("clientes").upsert(patch).select("*").single();
+export async function upsertCliente(patch: Partial<Cliente> & { razao_social: string; id?: string }) {
+  const { data, error } = await supabase
+    .from("clientes")
+    .upsert(patch as never)
+    .select("*")
+    .single();
   if (error) throw error;
   return data as Cliente;
 }
