@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      agenda_eventos: {
+        Row: {
+          cliente_id: string | null
+          cor: string | null
+          created_at: string
+          descricao: string | null
+          fim: string | null
+          id: string
+          inicio: string
+          lead_id: string | null
+          local: string | null
+          responsavel_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          fim?: string | null
+          id?: string
+          inicio: string
+          lead_id?: string | null
+          local?: string | null
+          responsavel_id?: string | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          fim?: string | null
+          id?: string
+          inicio?: string
+          lead_id?: string | null
+          local?: string | null
+          responsavel_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_eventos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_eventos_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_eventos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_eventos_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           acao: string
@@ -1413,6 +1493,83 @@ export type Database = {
         }
         Relationships: []
       }
+      processos: {
+        Row: {
+          cliente_id: string | null
+          concluido_em: string | null
+          created_at: string
+          etapa_atual: number
+          etapas: Json
+          id: string
+          lead_id: string | null
+          nome: string
+          responsavel_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          etapa_atual?: number
+          etapas?: Json
+          id?: string
+          lead_id?: string | null
+          nome: string
+          responsavel_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          etapa_atual?: number
+          etapas?: Json
+          id?: string
+          lead_id?: string | null
+          nome?: string
+          responsavel_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposta_palestrantes: {
         Row: {
           cache_proposto: number | null
@@ -1594,6 +1751,96 @@ export type Database = {
           valor?: string | null
         }
         Relationships: []
+      }
+      tarefas: {
+        Row: {
+          cliente_id: string | null
+          concluida_em: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          lead_id: string | null
+          prazo: string | null
+          prioridade: string
+          responsavel_id: string | null
+          status: string
+          tags: string[] | null
+          titulo: string
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          concluida_em?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id?: string | null
+          prazo?: string | null
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          tags?: string[] | null
+          titulo: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          concluida_em?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          lead_id?: string | null
+          prazo?: string | null
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          tags?: string[] | null
+          titulo?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

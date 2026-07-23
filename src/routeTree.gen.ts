@@ -21,7 +21,9 @@ import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as PalestranteIdRouteImport } from './routes/palestrante.$id'
 import { Route as AppVendasRouteImport } from './routes/app.vendas'
+import { Route as AppTarefasRouteImport } from './routes/app.tarefas'
 import { Route as AppPropostasRouteImport } from './routes/app.propostas'
+import { Route as AppProcessosRouteImport } from './routes/app.processos'
 import { Route as AppPrebalancoRouteImport } from './routes/app.prebalanco'
 import { Route as AppPalestrantesRouteImport } from './routes/app.palestrantes'
 import { Route as AppLogisticaRouteImport } from './routes/app.logistica'
@@ -32,6 +34,7 @@ import { Route as AppEventosRouteImport } from './routes/app.eventos'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
 import { Route as AppComissoesRouteImport } from './routes/app.comissoes'
 import { Route as AppClientesRouteImport } from './routes/app.clientes'
+import { Route as AppAgendaRouteImport } from './routes/app.agenda'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 
 const SolucoesRoute = SolucoesRouteImport.update({
@@ -94,9 +97,19 @@ const AppVendasRoute = AppVendasRouteImport.update({
   path: '/vendas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTarefasRoute = AppTarefasRouteImport.update({
+  id: '/tarefas',
+  path: '/tarefas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPropostasRoute = AppPropostasRouteImport.update({
   id: '/propostas',
   path: '/propostas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProcessosRoute = AppProcessosRouteImport.update({
+  id: '/processos',
+  path: '/processos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPrebalancoRoute = AppPrebalancoRouteImport.update({
@@ -149,6 +162,11 @@ const AppClientesRoute = AppClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAgendaRoute = AppAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -165,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/portal': typeof PortalRouteWithChildren
   '/solucoes': typeof SolucoesRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/agenda': typeof AppAgendaRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
   '/app/crm': typeof AppCrmRoute
@@ -175,7 +194,9 @@ export interface FileRoutesByFullPath {
   '/app/logistica': typeof AppLogisticaRoute
   '/app/palestrantes': typeof AppPalestrantesRoute
   '/app/prebalanco': typeof AppPrebalancoRoute
+  '/app/processos': typeof AppProcessosRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/tarefas': typeof AppTarefasRoute
   '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
@@ -189,6 +210,7 @@ export interface FileRoutesByTo {
   '/orcamento': typeof OrcamentoRoute
   '/solucoes': typeof SolucoesRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/agenda': typeof AppAgendaRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
   '/app/crm': typeof AppCrmRoute
@@ -199,7 +221,9 @@ export interface FileRoutesByTo {
   '/app/logistica': typeof AppLogisticaRoute
   '/app/palestrantes': typeof AppPalestrantesRoute
   '/app/prebalanco': typeof AppPrebalancoRoute
+  '/app/processos': typeof AppProcessosRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/tarefas': typeof AppTarefasRoute
   '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app': typeof AppIndexRoute
@@ -216,6 +240,7 @@ export interface FileRoutesById {
   '/portal': typeof PortalRouteWithChildren
   '/solucoes': typeof SolucoesRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/agenda': typeof AppAgendaRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
   '/app/crm': typeof AppCrmRoute
@@ -226,7 +251,9 @@ export interface FileRoutesById {
   '/app/logistica': typeof AppLogisticaRoute
   '/app/palestrantes': typeof AppPalestrantesRoute
   '/app/prebalanco': typeof AppPrebalancoRoute
+  '/app/processos': typeof AppProcessosRoute
   '/app/propostas': typeof AppPropostasRoute
+  '/app/tarefas': typeof AppTarefasRoute
   '/app/vendas': typeof AppVendasRoute
   '/palestrante/$id': typeof PalestranteIdRoute
   '/app/': typeof AppIndexRoute
@@ -244,6 +271,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/solucoes'
     | '/app/admin'
+    | '/app/agenda'
     | '/app/clientes'
     | '/app/comissoes'
     | '/app/crm'
@@ -254,7 +282,9 @@ export interface FileRouteTypes {
     | '/app/logistica'
     | '/app/palestrantes'
     | '/app/prebalanco'
+    | '/app/processos'
     | '/app/propostas'
+    | '/app/tarefas'
     | '/app/vendas'
     | '/palestrante/$id'
     | '/app/'
@@ -268,6 +298,7 @@ export interface FileRouteTypes {
     | '/orcamento'
     | '/solucoes'
     | '/app/admin'
+    | '/app/agenda'
     | '/app/clientes'
     | '/app/comissoes'
     | '/app/crm'
@@ -278,7 +309,9 @@ export interface FileRouteTypes {
     | '/app/logistica'
     | '/app/palestrantes'
     | '/app/prebalanco'
+    | '/app/processos'
     | '/app/propostas'
+    | '/app/tarefas'
     | '/app/vendas'
     | '/palestrante/$id'
     | '/app'
@@ -294,6 +327,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/solucoes'
     | '/app/admin'
+    | '/app/agenda'
     | '/app/clientes'
     | '/app/comissoes'
     | '/app/crm'
@@ -304,7 +338,9 @@ export interface FileRouteTypes {
     | '/app/logistica'
     | '/app/palestrantes'
     | '/app/prebalanco'
+    | '/app/processos'
     | '/app/propostas'
+    | '/app/tarefas'
     | '/app/vendas'
     | '/palestrante/$id'
     | '/app/'
@@ -409,11 +445,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVendasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/tarefas': {
+      id: '/app/tarefas'
+      path: '/tarefas'
+      fullPath: '/app/tarefas'
+      preLoaderRoute: typeof AppTarefasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/propostas': {
       id: '/app/propostas'
       path: '/propostas'
       fullPath: '/app/propostas'
       preLoaderRoute: typeof AppPropostasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/processos': {
+      id: '/app/processos'
+      path: '/processos'
+      fullPath: '/app/processos'
+      preLoaderRoute: typeof AppProcessosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/prebalanco': {
@@ -486,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/agenda': {
+      id: '/app/agenda'
+      path: '/agenda'
+      fullPath: '/app/agenda'
+      preLoaderRoute: typeof AppAgendaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin': {
       id: '/app/admin'
       path: '/admin'
@@ -498,6 +555,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
+  AppAgendaRoute: typeof AppAgendaRoute
   AppClientesRoute: typeof AppClientesRoute
   AppComissoesRoute: typeof AppComissoesRoute
   AppCrmRoute: typeof AppCrmRoute
@@ -508,13 +566,16 @@ interface AppRouteChildren {
   AppLogisticaRoute: typeof AppLogisticaRoute
   AppPalestrantesRoute: typeof AppPalestrantesRoute
   AppPrebalancoRoute: typeof AppPrebalancoRoute
+  AppProcessosRoute: typeof AppProcessosRoute
   AppPropostasRoute: typeof AppPropostasRoute
+  AppTarefasRoute: typeof AppTarefasRoute
   AppVendasRoute: typeof AppVendasRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
+  AppAgendaRoute: AppAgendaRoute,
   AppClientesRoute: AppClientesRoute,
   AppComissoesRoute: AppComissoesRoute,
   AppCrmRoute: AppCrmRoute,
@@ -525,7 +586,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppLogisticaRoute: AppLogisticaRoute,
   AppPalestrantesRoute: AppPalestrantesRoute,
   AppPrebalancoRoute: AppPrebalancoRoute,
+  AppProcessosRoute: AppProcessosRoute,
   AppPropostasRoute: AppPropostasRoute,
+  AppTarefasRoute: AppTarefasRoute,
   AppVendasRoute: AppVendasRoute,
   AppIndexRoute: AppIndexRoute,
 }

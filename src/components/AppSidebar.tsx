@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Users, FileText, Kanban, DollarSign, Scale,
   Settings, Mic2, Search, ChevronDown, Sparkles,
   Plane, ClipboardCheck, Building2, TrendingUp, UserCog, Wallet, PieChart, Menu, LogOut,
+  CalendarDays, CheckSquare, Workflow,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
@@ -18,6 +19,11 @@ const nav = [
     { to: "/app/propostas", label: "Propostas", icon: FileText },
     { to: "/app/vendas", label: "Vendas", icon: TrendingUp },
     { to: "/app/kanban", label: "Kanban Multi", icon: Kanban },
+  ]},
+  { group: "Produtividade", items: [
+    { to: "/app/agenda", label: "Agenda", icon: CalendarDays },
+    { to: "/app/tarefas", label: "Tarefas", icon: CheckSquare },
+    { to: "/app/processos", label: "Processos", icon: Workflow },
   ]},
   { group: "Cadastros", items: [
     { to: "/app/clientes", label: "Clientes 360°", icon: Building2 },
