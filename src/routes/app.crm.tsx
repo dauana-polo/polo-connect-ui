@@ -304,13 +304,15 @@ function LeadCard({ l, onOpen, onGanho }: { l: Lead; onOpen: () => void; onGanho
         </div>
       </button>
       {l.etapa === "negociacao" && (
-        <Button
-          size="sm"
-          className="w-full mt-2 h-7 bg-emerald-600 hover:bg-emerald-700 text-xs"
-          onClick={(e) => { e.stopPropagation(); onGanho(); }}
-        >
-          <TrophyIcon className="h-3 w-3 mr-1" /> Marcar Ganho
-        </Button>
+        <Can resource="crm" action="edit">
+          <Button
+            size="sm"
+            className="w-full mt-2 h-7 bg-emerald-600 hover:bg-emerald-700 text-xs"
+            onClick={(e) => { e.stopPropagation(); onGanho(); }}
+          >
+            <TrophyIcon className="h-3 w-3 mr-1" /> Marcar Ganho
+          </Button>
+        </Can>
       )}
     </div>
   );
