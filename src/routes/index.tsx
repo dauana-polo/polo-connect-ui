@@ -32,6 +32,17 @@ const logos = ["Itaú", "Vale", "Magazine Luiza", "Natura", "Ambev", "XP Inc", "
 const areas = ["Liderança", "Cultura", "Inovação", "Vendas", "ESG", "Alta Performance", "Tecnologia", "Comunicação"];
 
 function Home() {
+  const [destaques, setDestaques] = useState<Destaque[]>([]);
+  useEffect(() => {
+    supabase
+      .from("palestrantes")
+      .select("id,nome,foto_url,temas,avaliacao_media,total_eventos")
+      .eq("publicar_site", true)
+      .eq("status", "ativo")
+      .order("total_eventos", { ascending: false, nullsFirst: false })
+      .limit(6)
+      .then(({ data }) => setDestaques((data ?? []) as Destaque[]));
+  }, []);
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
