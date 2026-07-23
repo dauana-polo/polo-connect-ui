@@ -360,6 +360,15 @@ function Propostas() {
           </TabsContent>
         </Tabs>
       </div>
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        onOpenChange={(v) => !v && setConfirmDeleteId(null)}
+        title="Excluir proposta?"
+        description="Esta ação é permanente e removerá também os palestrantes vinculados a ela."
+        destructive
+        confirmLabel="Excluir"
+        onConfirm={() => confirmDeleteId && excluir.mutate(confirmDeleteId)}
+      />
     </>
   );
 }
