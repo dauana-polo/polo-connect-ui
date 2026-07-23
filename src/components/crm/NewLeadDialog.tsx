@@ -14,7 +14,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Building2 } from "lucide-react";
 import { toast } from "sonner";
-import { requiredString, optionalEmail, phoneSchema, isoDateSchema, moneySchema } from "@/lib/validators";
+import { requiredString } from "@/lib/validators";
 
 const ORIGENS = [
   { id: "site", label: "Site" },
