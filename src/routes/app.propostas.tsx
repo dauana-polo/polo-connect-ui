@@ -53,12 +53,15 @@ type PropostaRow = {
 
 function Propostas() {
   const qc = useQueryClient();
+  const { can } = usePermissions();
+  const canEdit = can("propostas", "edit");
   const [tab, setTab] = useState("lista");
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string>("");
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const { data: propostas = [], isLoading } = useQuery({
+  const { data: propostas = [], isLoading, error, refetch } = useQuery({
     queryKey: ["propostas-lista"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -70,6 +73,29 @@ function Propostas() {
       if (error) throw error;
       return (data ?? []) as unknown as PropostaRow[];
     },
+  });
+
+  const setStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("propostas").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Status atualizado"); qc.invalidateQueries({ queryKey: ["propostas-lista"] }); },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao atualizar status"),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("propostas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Proposta excluída");
+      setConfirmDeleteId(null);
+      if (previewId === confirmDeleteId) setPreviewId(null);
+      qc.invalidateQueries({ queryKey: ["propostas-lista"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
   });
 
   const { data: leadsAbertos = [] } = useQuery({
