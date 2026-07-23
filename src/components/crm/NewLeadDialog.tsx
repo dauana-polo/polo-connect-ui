@@ -27,22 +27,23 @@ const ORIGENS = [
 
 const schema = z.object({
   empresa: requiredString("Empresa"),
-  cliente_id: z.string().optional(),
-  contato_nome: z.string().trim().max(150).optional(),
-  contato_email: optionalEmail,
-  contato_tel: phoneSchema.optional(),
-  tema_evento: z.string().trim().max(200).optional(),
-  data_pretendida: isoDateSchema.optional(),
-  cidade_evento: z.string().trim().max(120).optional(),
-  formato: z.string().optional(),
-  orcamento_est: z.union([z.string(), z.number()]).optional().transform((v) =>
-    v === "" || v === undefined || v === null ? null : Number(v),
-  ).pipe(z.number().nonnegative("Orçamento inválido").nullable()),
-  origem: z.string().min(1),
-  descricao: z.string().trim().max(2000).optional(),
+  cliente_id: z.string().optional().default(""),
+  contato_nome: z.string().trim().max(150).optional().default(""),
+  contato_email: optionalEmail.default(""),
+  contato_tel: phoneSchema.optional().default(""),
+  tema_evento: z.string().trim().max(200).optional().default(""),
+  data_pretendida: isoDateSchema.optional().default(""),
+  cidade_evento: z.string().trim().max(120).optional().default(""),
+  formato: z.string().optional().default(""),
+  orcamento_est: z.string().trim().refine(
+    (v) => !v || (Number.isFinite(Number(v)) && Number(v) >= 0),
+    "Orçamento inválido",
+  ).optional().default(""),
+  origem: z.string().min(1).default("ativo"),
+  descricao: z.string().trim().max(2000).optional().default(""),
 });
 
-type FormValues = z.input<typeof schema>;
+type FormValues = z.infer<typeof schema>;
 
 export function NewLeadDialog() {
   const qc = useQueryClient();
