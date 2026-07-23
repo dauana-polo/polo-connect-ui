@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { VendaDrawer } from "@/components/vendas/VendaDrawer";
 import { formatBRL } from "@/lib/crm/constants";
 import { TrendingUp, Percent, Wallet, Receipt, Building2, Pencil } from "lucide-react";
+import { Can } from "@/components/shared/Can";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
 
 export const Route = createFileRoute("/app/vendas")({ component: VendasPage });
 
