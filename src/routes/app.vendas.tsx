@@ -106,7 +106,19 @@ function VendasPage() {
   };
   const empresaInitial = (id: string | null) => (empresaLabel(id)[0] ?? "?").toUpperCase();
 
-  if (!isLoading && vendas.length === 0) {
+  if (isLoading) {
+    return (<>
+      <AppTopbar title="Vendas & Tributação" breadcrumb={["Comercial", "Vendas"]} />
+      <LoadingState label="Carregando vendas…" />
+    </>);
+  }
+  if (error) {
+    return (<>
+      <AppTopbar title="Vendas & Tributação" breadcrumb={["Comercial", "Vendas"]} />
+      <ErrorState message={(error as Error).message} onRetry={() => refetch()} />
+    </>);
+  }
+  if (vendas.length === 0) {
     return (
       <>
         <AppTopbar title="Vendas & Tributação" breadcrumb={["Comercial", "Vendas"]} />
