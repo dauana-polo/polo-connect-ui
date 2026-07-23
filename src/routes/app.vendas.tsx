@@ -43,7 +43,7 @@ function VendasPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerId, setDrawerId] = useState<string | null>(null);
 
-  const { data: vendas = [], isLoading } = useQuery({
+  const { data: vendas = [], isLoading, error, refetch } = useQuery({
     queryKey: ["vendas-lista"],
     queryFn: async () => {
       const { data, error } = await supabase
