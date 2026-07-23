@@ -470,6 +470,7 @@ function TabPropostas({ lead }: { lead: Lead }) {
     <div className="space-y-3 pt-2">
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">{propostas.length} proposta(s)</div>
+        <Can resource="crm" action="edit">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" disabled={recs.length === 0}>
