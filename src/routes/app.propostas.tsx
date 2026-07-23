@@ -272,7 +272,7 @@ function Propostas() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center justify-between max-w-2xl mx-auto">
+                <div className="flex items-center justify-between max-w-2xl mx-auto gap-2">
                   <Select value={previewData.id} onValueChange={setPreviewId}>
                     <SelectTrigger className="w-72">
                       <SelectValue />
@@ -285,7 +285,22 @@ function Propostas() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <GerarSugestaoPDF propostaId={previewData.id} />
+                  <div className="flex items-center gap-2">
+                    <Can resource="propostas" action="edit">
+                      <Select
+                        value={previewData.status}
+                        onValueChange={(v) => setStatus.mutate({ id: previewData.id, status: v })}
+                      >
+                        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(statusLabel).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Can>
+                    <GerarSugestaoPDF propostaId={previewData.id} />
+                  </div>
                 </div>
                 <div className="flex justify-center">
                   <Card className="max-w-2xl w-full shadow-xl">
