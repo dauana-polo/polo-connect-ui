@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,9 +23,12 @@ import {
 import { NewBusinessWizard } from "./NewBusinessWizard";
 import { GerarSugestaoPDF } from "./GerarSugestaoPDF";
 import { MarcarGanhoDialog } from "./MarcarGanhoDialog";
+import { Can } from "@/components/shared/Can";
+import { usePermissions } from "@/hooks/usePermissions";
+import { requiredString, optionalEmail, phoneSchema, isoDateSchema } from "@/lib/validators";
 import {
-  Check, Trash2, Plus, Phone, Mail, MessageSquare, Calendar, CheckCircle2,
-  Clock, ArrowRight, AlertTriangle, FileText, MessageCircle,
+  Trash2, Plus, Phone, Mail, MessageSquare, Calendar, CheckCircle2,
+  Clock, ArrowRight, AlertTriangle, FileText,
 } from "lucide-react";
 
 type Lead = any;
