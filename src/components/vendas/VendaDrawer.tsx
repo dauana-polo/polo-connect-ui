@@ -294,7 +294,9 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+              <Can resource="vendas" action="edit">
+                <Button onClick={handleSave} disabled={saving || !canEdit}>{saving ? "Salvando…" : "Salvar"}</Button>
+              </Can>
             </div>
           </div>
         )}
