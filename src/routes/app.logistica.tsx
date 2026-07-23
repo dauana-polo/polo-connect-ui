@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -50,6 +50,7 @@ function LogisticaPage() {
   const qc = useQueryClient();
   const [view, setView] = useState<"cards" | "kanban">("cards");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<LogisticaRow | null>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["logistica-lista"],
@@ -65,6 +66,10 @@ function LogisticaPage() {
 
   const selected = rows.find((r) => r.id === selectedId) ?? rows[0] ?? null;
 
+  useEffect(() => {
+    if (selected) setDraft({ ...selected });
+  }, [selected?.id]);
+
   const save = useMutation({
     mutationFn: async (row: LogisticaRow) => {
       const { venda, id, ...payload } = row as any;
@@ -78,21 +83,21 @@ function LogisticaPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const setF = (k: keyof LogisticaRow, v: any) =>
+    setDraft((d) => (d ? { ...d, [k]: v } : d));
+
   return (
     <>
       <AppTopbar title="Logística de Viagens" breadcrumb={["Operação", "Logística"]} />
       <div className="flex-1 overflow-auto p-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2 flex-wrap">
-            {Object.entries(statusMap).map(([k, v]) => {
-              const count = rows.filter((l) => l.status === k).length;
-              return (
-                <Card key={k} className="px-4 py-3 min-w-[140px]">
-                  <div className="text-xs text-muted-foreground">{v.label}</div>
-                  <div className="text-2xl font-bold">{count}</div>
-                </Card>
-              );
-            })}
+            {Object.entries(statusMap).map(([k, v]) => (
+              <Card key={k} className="px-4 py-3 min-w-[140px]">
+                <div className="text-xs text-muted-foreground">{v.label}</div>
+                <div className="text-2xl font-bold">{rows.filter((l) => l.status === k).length}</div>
+              </Card>
+            ))}
           </div>
           <Tabs value={view} onValueChange={(v) => setView(v as any)}>
             <TabsList>
@@ -137,15 +142,15 @@ function LogisticaPage() {
               ))}
             </div>
 
-            {selected && (
+            {draft && (
               <Card className="p-5 h-fit lg:sticky lg:top-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-muted-foreground">{selected.venda?.data_evento ?? "—"}</div>
-                    <div className="font-semibold">{selected.venda?.titulo ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground">{selected.venda?.palestrante?.nome ?? "—"}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-xs text-muted-foreground">{draft.venda?.data_evento ?? "—"}</div>
+                    <div className="font-semibold truncate">{draft.venda?.titulo ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground truncate">{draft.venda?.palestrante?.nome ?? "—"}</div>
                   </div>
-                  <Select value={selected.status} onValueChange={(v) => save.mutate({ ...selected, status: v })}>
+                  <Select value={draft.status} onValueChange={(v) => setF("status", v)}>
                     <SelectTrigger className="w-40 h-8"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(statusMap).map(([k, v]) => (
@@ -155,45 +160,45 @@ function LogisticaPage() {
                   </Select>
                 </div>
 
-                <LogSection title="Voo — Ida" icon={<Plane className="h-3 w-3" />}>
+                <Section title="Voo — Ida" icon={<Plane className="h-3 w-3" />}>
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Cia" value={selected.passagem_ida_cia} onChange={(v) => setSelectedField("passagem_ida_cia", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Voo" value={selected.passagem_ida_voo} onChange={(v) => setSelectedField("passagem_ida_voo", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Origem" value={selected.passagem_ida_origem} onChange={(v) => setSelectedField("passagem_ida_origem", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Destino" value={selected.passagem_ida_destino} onChange={(v) => setSelectedField("passagem_ida_destino", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Data" type="date" value={selected.passagem_ida_data} onChange={(v) => setSelectedField("passagem_ida_data", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Hora" type="time" value={selected.passagem_ida_hora} onChange={(v) => setSelectedField("passagem_ida_hora", v, selected, setSelectedId, rows, save)} />
+                    <F label="Cia" value={draft.passagem_ida_cia} onChange={(v) => setF("passagem_ida_cia", v)} />
+                    <F label="Voo" value={draft.passagem_ida_voo} onChange={(v) => setF("passagem_ida_voo", v)} />
+                    <F label="Origem" value={draft.passagem_ida_origem} onChange={(v) => setF("passagem_ida_origem", v)} />
+                    <F label="Destino" value={draft.passagem_ida_destino} onChange={(v) => setF("passagem_ida_destino", v)} />
+                    <F label="Data" type="date" value={draft.passagem_ida_data} onChange={(v) => setF("passagem_ida_data", v)} />
+                    <F label="Hora" type="time" value={draft.passagem_ida_hora} onChange={(v) => setF("passagem_ida_hora", v)} />
                   </div>
-                </LogSection>
+                </Section>
 
-                <LogSection title="Voo — Volta" icon={<Plane className="h-3 w-3 rotate-180" />}>
+                <Section title="Voo — Volta" icon={<Plane className="h-3 w-3 rotate-180" />}>
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Cia" value={selected.passagem_volta_cia} onChange={(v) => setSelectedField("passagem_volta_cia", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Voo" value={selected.passagem_volta_voo} onChange={(v) => setSelectedField("passagem_volta_voo", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Data" type="date" value={selected.passagem_volta_data} onChange={(v) => setSelectedField("passagem_volta_data", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Hora" type="time" value={selected.passagem_volta_hora} onChange={(v) => setSelectedField("passagem_volta_hora", v, selected, setSelectedId, rows, save)} />
+                    <F label="Cia" value={draft.passagem_volta_cia} onChange={(v) => setF("passagem_volta_cia", v)} />
+                    <F label="Voo" value={draft.passagem_volta_voo} onChange={(v) => setF("passagem_volta_voo", v)} />
+                    <F label="Data" type="date" value={draft.passagem_volta_data} onChange={(v) => setF("passagem_volta_data", v)} />
+                    <F label="Hora" type="time" value={draft.passagem_volta_hora} onChange={(v) => setF("passagem_volta_hora", v)} />
                   </div>
-                </LogSection>
+                </Section>
 
-                <LogSection title="Hospedagem" icon={<Hotel className="h-3 w-3" />}>
-                  <Field label="Hotel" value={selected.hotel_nome} onChange={(v) => setSelectedField("hotel_nome", v, selected, setSelectedId, rows, save)} />
+                <Section title="Hospedagem" icon={<Hotel className="h-3 w-3" />}>
+                  <F label="Hotel" value={draft.hotel_nome} onChange={(v) => setF("hotel_nome", v)} />
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Check-in" type="date" value={selected.hotel_checkin} onChange={(v) => setSelectedField("hotel_checkin", v, selected, setSelectedId, rows, save)} />
-                    <Field label="Check-out" type="date" value={selected.hotel_checkout} onChange={(v) => setSelectedField("hotel_checkout", v, selected, setSelectedId, rows, save)} />
+                    <F label="Check-in" type="date" value={draft.hotel_checkin} onChange={(v) => setF("hotel_checkin", v)} />
+                    <F label="Check-out" type="date" value={draft.hotel_checkout} onChange={(v) => setF("hotel_checkout", v)} />
                   </div>
-                  <Field label="Reserva" value={selected.hotel_reserva} onChange={(v) => setSelectedField("hotel_reserva", v, selected, setSelectedId, rows, save)} />
-                </LogSection>
+                  <F label="Reserva" value={draft.hotel_reserva} onChange={(v) => setF("hotel_reserva", v)} />
+                </Section>
 
-                <LogSection title="Transfer" icon={<Car className="h-3 w-3" />}>
-                  <Field label="Ida — empresa" value={selected.transfer_ida_empresa} onChange={(v) => setSelectedField("transfer_ida_empresa", v, selected, setSelectedId, rows, save)} />
-                  <Field label="Volta — empresa" value={selected.transfer_volta_empresa} onChange={(v) => setSelectedField("transfer_volta_empresa", v, selected, setSelectedId, rows, save)} />
-                </LogSection>
+                <Section title="Transfer" icon={<Car className="h-3 w-3" />}>
+                  <F label="Ida — empresa" value={draft.transfer_ida_empresa} onChange={(v) => setF("transfer_ida_empresa", v)} />
+                  <F label="Volta — empresa" value={draft.transfer_volta_empresa} onChange={(v) => setF("transfer_volta_empresa", v)} />
+                </Section>
 
-                <LogSection title="Observações" icon={<MapPin className="h-3 w-3" />}>
-                  <Textarea rows={3} value={selected.observacoes ?? ""} onChange={(e) => setSelectedField("observacoes", e.target.value, selected, setSelectedId, rows, save)} />
-                </LogSection>
+                <Section title="Observações" icon={<MapPin className="h-3 w-3" />}>
+                  <Textarea rows={3} value={draft.observacoes ?? ""} onChange={(e) => setF("observacoes", e.target.value)} />
+                </Section>
 
-                <Button className="w-full" onClick={() => save.mutate(selected)} disabled={save.isPending}>
+                <Button className="w-full" onClick={() => save.mutate(draft)} disabled={save.isPending}>
                   {save.isPending ? "Salvando…" : "Salvar logística"}
                 </Button>
               </Card>
@@ -224,7 +229,7 @@ function LogisticaPage() {
   );
 }
 
-function LogSection({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div>
       <div className="text-[11px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">{icon} {title}</div>
@@ -233,20 +238,11 @@ function LogSection({ title, icon, children }: { title: string; icon: React.Reac
   );
 }
 
-function Field({ label, value, onChange, type = "text" }: { label: string; value: any; onChange: (v: string) => void; type?: string }) {
+function F({ label, value, onChange, type = "text" }: { label: string; value: any; onChange: (v: string) => void; type?: string }) {
   return (
     <div>
       <Label className="text-[10px] text-muted-foreground">{label}</Label>
       <Input className="h-8 text-xs" type={type} value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
-}
-
-// Local optimistic mutation helper - update in cache then persist on blur/save button
-function setSelectedField(
-  _k: string, _v: string, _selected: any, _setSelectedId: any, _rows: any[], _save: any,
-) {
-  // Simplified: the user clicks "Salvar logística" to persist. This helper is a stub that mutates
-  // the DOM-controlled input value; we rely on the Save button for persistence to avoid excessive PATCHes.
-  // For live edits, override with local state above if desired.
 }
