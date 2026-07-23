@@ -85,6 +85,26 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
   const handleSave = async () => {
     if (!data) return;
     setSaving(true);
+
+    // Conflict check: same palestrante + same data_evento on other active vendas
+    if (data.data_evento) {
+      const { data: vRow } = await supabase.from("vendas").select("palestrante_id").eq("id", data.id).single();
+      if (vRow?.palestrante_id) {
+        const { data: conflitos } = await supabase
+          .from("vendas")
+          .select("id")
+          .eq("palestrante_id", vRow.palestrante_id)
+          .eq("data_evento", data.data_evento)
+          .neq("status", "cancelado")
+          .neq("id", data.id);
+        if (conflitos && conflitos.length > 0) {
+          setSaving(false);
+          toast.error(`Conflito de agenda: este palestrante já tem outro evento em ${data.data_evento}.`);
+          return;
+        }
+      }
+    }
+
     const { error } = await supabase
       .from("vendas")
       .update({
