@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppTopbar } from "@/components/AppSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NewBusinessWizard } from "@/components/crm/NewBusinessWizard";
 import { GerarSugestaoPDF } from "@/components/crm/GerarSugestaoPDF";
 import { formatBRL } from "@/lib/crm/constants";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { Can } from "@/components/shared/Can";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const Route = createFileRoute("/app/propostas")({
   component: Propostas,
@@ -47,12 +53,15 @@ type PropostaRow = {
 
 function Propostas() {
   const qc = useQueryClient();
+  const { can } = usePermissions();
+  const canEdit = can("propostas", "edit");
   const [tab, setTab] = useState("lista");
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string>("");
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const { data: propostas = [], isLoading } = useQuery({
+  const { data: propostas = [], isLoading, error, refetch } = useQuery({
     queryKey: ["propostas-lista"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -64,6 +73,29 @@ function Propostas() {
       if (error) throw error;
       return (data ?? []) as unknown as PropostaRow[];
     },
+  });
+
+  const setStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("propostas").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Status atualizado"); qc.invalidateQueries({ queryKey: ["propostas-lista"] }); },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao atualizar status"),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("propostas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Proposta excluída");
+      setConfirmDeleteId(null);
+      if (previewId === confirmDeleteId) setPreviewId(null);
+      qc.invalidateQueries({ queryKey: ["propostas-lista"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
   });
 
   const { data: leadsAbertos = [] } = useQuery({
@@ -96,11 +128,16 @@ function Propostas() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-5">
           <TabsList>
             <TabsTrigger value="lista">Lista</TabsTrigger>
-            <TabsTrigger value="nova">Nova Proposta</TabsTrigger>
+            {canEdit && <TabsTrigger value="nova">Nova Proposta</TabsTrigger>}
             <TabsTrigger value="preview">Preview PDF</TabsTrigger>
           </TabsList>
 
           <TabsContent value="lista">
+            {isLoading ? (
+              <LoadingState label="Carregando propostas…" />
+            ) : error ? (
+              <ErrorState message={(error as Error).message} onRetry={() => refetch()} />
+            ) : (
             <Card>
               <CardContent className="p-0 overflow-x-auto">
                 <table className="w-full text-sm">
@@ -113,6 +150,7 @@ function Propostas() {
                       <th className="text-left font-medium px-2 py-3">Criada em</th>
                       <th className="text-left font-medium px-2 py-3">Consultor</th>
                       <th className="text-left font-medium px-5 py-3">Status</th>
+                      <th className="px-2 py-3" />
                     </tr>
                   </thead>
                   <tbody>
@@ -144,11 +182,24 @@ function Propostas() {
                             {statusLabel[p.status] ?? p.status}
                           </Badge>
                         </td>
+                        <td className="px-2 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <Can resource="propostas" action="edit">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              onClick={() => setConfirmDeleteId(p.id)}
+                              aria-label="Excluir proposta"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </Can>
+                        </td>
                       </tr>
                     ))}
-                    {!isLoading && propostas.length === 0 && (
+                    {propostas.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground text-sm">
+                        <td colSpan={8} className="px-5 py-10 text-center text-muted-foreground text-sm">
                           Nenhuma proposta ainda. Crie uma na aba "Nova Proposta".
                         </td>
                       </tr>
@@ -157,6 +208,7 @@ function Propostas() {
                 </table>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="nova">
@@ -220,7 +272,7 @@ function Propostas() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center justify-between max-w-2xl mx-auto">
+                <div className="flex items-center justify-between max-w-2xl mx-auto gap-2">
                   <Select value={previewData.id} onValueChange={setPreviewId}>
                     <SelectTrigger className="w-72">
                       <SelectValue />
@@ -233,7 +285,22 @@ function Propostas() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <GerarSugestaoPDF propostaId={previewData.id} />
+                  <div className="flex items-center gap-2">
+                    <Can resource="propostas" action="edit">
+                      <Select
+                        value={previewData.status}
+                        onValueChange={(v) => setStatus.mutate({ id: previewData.id, status: v })}
+                      >
+                        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(statusLabel).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Can>
+                    <GerarSugestaoPDF propostaId={previewData.id} />
+                  </div>
                 </div>
                 <div className="flex justify-center">
                   <Card className="max-w-2xl w-full shadow-xl">
@@ -293,6 +360,15 @@ function Propostas() {
           </TabsContent>
         </Tabs>
       </div>
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        onOpenChange={(v) => !v && setConfirmDeleteId(null)}
+        title="Excluir proposta?"
+        description="Esta ação é permanente e removerá também os palestrantes vinculados a ela."
+        destructive
+        confirmLabel="Excluir"
+        onConfirm={() => { if (confirmDeleteId) excluir.mutate(confirmDeleteId); }}
+      />
     </>
   );
 }

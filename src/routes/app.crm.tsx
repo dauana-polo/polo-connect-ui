@@ -13,6 +13,10 @@ import { NewLeadDialog } from "@/components/crm/NewLeadDialog";
 import { MarcarGanhoDialog } from "@/components/crm/MarcarGanhoDialog";
 import { Calendar, Search, User, TrendingUp, Trophy, AlertCircle, DollarSign, Mic2, ChevronDown, ChevronUp, Trophy as TrophyIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Can } from "@/components/shared/Can";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const Route = createFileRoute("/app/crm")({ component: CRM });
 
@@ -37,7 +41,10 @@ function CRM() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [expandedStage, setExpandedStage] = useState<string | null>(ETAPAS[0].id);
 
-  const { data: leads = [], isLoading } = useQuery({
+  const { can } = usePermissions();
+  const canEdit = can("crm", "edit");
+
+  const { data: leads = [], isLoading, error, refetch } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -177,9 +184,13 @@ function CRM() {
               </SelectContent>
             </Select>
           </div>
-          <NewLeadDialog />
+          <Can resource="crm" action="edit"><NewLeadDialog /></Can>
         </div>
 
+        {isLoading && <LoadingState label="Carregando leads…" />}
+        {error && <ErrorState message={(error as Error).message} onRetry={() => refetch()} />}
+
+        {!isLoading && !error && (<>
         {/* Mobile: accordion list. Desktop: kanban grid */}
         <div className="md:hidden space-y-2">
           {ETAPAS.map((stage) => {
@@ -253,8 +264,7 @@ function CRM() {
             );
           })}
         </div>
-
-        {isLoading && <div className="text-sm text-muted-foreground">Carregando…</div>}
+        </>)}
       </div>
 
       <LeadDrawer leadId={openLeadId} onClose={() => setOpenLeadId(null)} />
@@ -294,13 +304,15 @@ function LeadCard({ l, onOpen, onGanho }: { l: Lead; onOpen: () => void; onGanho
         </div>
       </button>
       {l.etapa === "negociacao" && (
-        <Button
-          size="sm"
-          className="w-full mt-2 h-7 bg-emerald-600 hover:bg-emerald-700 text-xs"
-          onClick={(e) => { e.stopPropagation(); onGanho(); }}
-        >
-          <TrophyIcon className="h-3 w-3 mr-1" /> Marcar Ganho
-        </Button>
+        <Can resource="crm" action="edit">
+          <Button
+            size="sm"
+            className="w-full mt-2 h-7 bg-emerald-600 hover:bg-emerald-700 text-xs"
+            onClick={(e) => { e.stopPropagation(); onGanho(); }}
+          >
+            <TrophyIcon className="h-3 w-3 mr-1" /> Marcar Ganho
+          </Button>
+        </Can>
       )}
     </div>
   );

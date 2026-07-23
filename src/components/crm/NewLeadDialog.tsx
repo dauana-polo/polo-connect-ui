@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +14,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { requiredString } from "@/lib/validators";
 
 const ORIGENS = [
   { id: "site", label: "Site" },
@@ -21,51 +25,81 @@ const ORIGENS = [
   { id: "outro", label: "Outro" },
 ];
 
+const schema = z.object({
+  empresa: requiredString("Empresa"),
+  cliente_id: z.string(),
+  contato_nome: z.string().trim().max(150),
+  contato_email: z.string().trim().max(255).refine(
+    (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "E-mail inválido",
+  ),
+  contato_tel: z.string().trim().refine(
+    (v) => !v || [10, 11].includes(v.replace(/\D/g, "").length), "Telefone inválido",
+  ),
+  tema_evento: z.string().trim().max(200),
+  data_pretendida: z.string().trim().refine(
+    (v) => !v || !Number.isNaN(new Date(v).getTime()), "Data inválida",
+  ),
+  cidade_evento: z.string().trim().max(120),
+  formato: z.string(),
+  orcamento_est: z.string().trim().refine(
+    (v) => !v || (Number.isFinite(Number(v)) && Number(v) >= 0), "Orçamento inválido",
+  ),
+  origem: z.string().min(1),
+  descricao: z.string().trim().max(2000),
+});
+
+type FormValues = z.infer<typeof schema>;
+
 export function NewLeadDialog() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const empty = {
-    empresa: "", cliente_id: "" as string | "",
-    contato_nome: "", contato_email: "", contato_tel: "",
-    tema_evento: "", data_pretendida: "", cidade_evento: "",
-    formato: "", orcamento_est: "", origem: "ativo", descricao: "",
-  };
-  const [form, setForm] = useState(empty);
   const [showSugg, setShowSugg] = useState(false);
 
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      empresa: "", cliente_id: "", contato_nome: "", contato_email: "", contato_tel: "",
+      tema_evento: "", data_pretendida: "", cidade_evento: "", formato: "",
+      orcamento_est: "", origem: "ativo", descricao: "",
+    },
+  });
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = form;
+  const empresaVal = watch("empresa");
+  const clienteIdVal = watch("cliente_id");
+
   const { data: clientes = [] } = useQuery({
-    queryKey: ["clientes-search", form.empresa],
-    enabled: open && form.empresa.length >= 2 && !form.cliente_id,
+    queryKey: ["clientes-search", empresaVal],
+    enabled: open && !!empresaVal && empresaVal.length >= 2 && !clienteIdVal,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clientes")
         .select("id,razao_social,nome_fantasia")
-        .or(`razao_social.ilike.%${form.empresa}%,nome_fantasia.ilike.%${form.empresa}%`)
+        .or(`razao_social.ilike.%${empresaVal}%,nome_fantasia.ilike.%${empresaVal}%`)
         .limit(6);
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  useEffect(() => { if (!open) { setForm(empty); setShowSugg(false); } /* eslint-disable-next-line */ }, [open]);
+  useEffect(() => { if (!open) { reset(); setShowSugg(false); } }, [open, reset]);
 
   const criar = useMutation({
-    mutationFn: async () => {
-      if (!form.empresa) throw new Error("Empresa é obrigatória");
-      const payload: any = {
-        empresa: form.empresa,
-        cliente_id: form.cliente_id || null,
-        contato_nome: form.contato_nome || null,
-        contato_email: form.contato_email || null,
-        contato_tel: form.contato_tel || null,
-        tema_evento: form.tema_evento || null,
-        data_pretendida: form.data_pretendida || null,
-        cidade_evento: form.cidade_evento || null,
-        formato: form.formato || null,
-        orcamento_est: form.orcamento_est ? Number(form.orcamento_est) : null,
-        origem: form.origem || "ativo",
-        descricao: form.descricao || null,
-        etapa: "contato_recebido",
+    mutationFn: async (values: FormValues) => {
+      const orc = values.orcamento_est;
+      const payload = {
+        empresa: values.empresa,
+        cliente_id: values.cliente_id || null,
+        contato_nome: values.contato_nome || null,
+        contato_email: values.contato_email || null,
+        contato_tel: values.contato_tel || null,
+        tema_evento: values.tema_evento || null,
+        data_pretendida: values.data_pretendida || null,
+        cidade_evento: values.cidade_evento || null,
+        formato: values.formato || null,
+        orcamento_est: orc === "" || orc === undefined || orc === null ? null : Number(orc),
+        origem: values.origem || "ativo",
+        descricao: values.descricao || null,
+        etapa: "contato_recebido" as const,
       };
       const { error } = await supabase.from("leads").insert(payload);
       if (error) throw error;
@@ -75,11 +109,12 @@ export function NewLeadDialog() {
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["leads"] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(e.message ?? "Erro ao criar lead"),
   });
 
   const pickCliente = (c: any) => {
-    setForm((f) => ({ ...f, cliente_id: c.id, empresa: c.nome_fantasia || c.razao_social }));
+    setValue("cliente_id", c.id);
+    setValue("empresa", c.nome_fantasia || c.razao_social);
     setShowSugg(false);
   };
 
@@ -90,15 +125,16 @@ export function NewLeadDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Novo atendimento</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+        <form onSubmit={handleSubmit((v) => criar.mutate(v))} className="space-y-3">
           <div className="space-y-1 relative">
             <Label className="text-xs">Empresa *</Label>
             <Input
-              value={form.empresa}
-              onChange={(e) => { setForm({ ...form, empresa: e.target.value, cliente_id: "" }); setShowSugg(true); }}
+              {...register("empresa")}
+              onChange={(e) => { setValue("empresa", e.target.value); setValue("cliente_id", ""); setShowSugg(true); }}
               onFocus={() => setShowSugg(true)}
               placeholder="Digite para buscar em clientes…"
             />
+            {errors.empresa && <div className="text-[11px] text-rose-500">{errors.empresa.message}</div>}
             {showSugg && clientes.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-md z-10 max-h-48 overflow-auto">
                 {clientes.map((c: any) => (
@@ -119,26 +155,32 @@ export function NewLeadDialog() {
                 ))}
               </div>
             )}
-            {form.cliente_id && (
+            {clienteIdVal && (
               <div className="text-[11px] text-emerald-600">✓ Vinculado a cliente existente</div>
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label className="text-xs">Contato</Label>
-              <Input value={form.contato_nome} onChange={(e) => setForm({ ...form, contato_nome: e.target.value })} /></div>
+              <Input {...register("contato_nome")} /></div>
             <div className="space-y-1"><Label className="text-xs">Telefone</Label>
-              <Input value={form.contato_tel} onChange={(e) => setForm({ ...form, contato_tel: e.target.value })} /></div>
+              <Input {...register("contato_tel")} />
+              {errors.contato_tel && <div className="text-[11px] text-rose-500">{errors.contato_tel.message}</div>}
+            </div>
             <div className="space-y-1 col-span-2"><Label className="text-xs">E-mail</Label>
-              <Input type="email" value={form.contato_email} onChange={(e) => setForm({ ...form, contato_email: e.target.value })} /></div>
+              <Input type="email" {...register("contato_email")} />
+              {errors.contato_email && <div className="text-[11px] text-rose-500">{errors.contato_email.message}</div>}
+            </div>
             <div className="space-y-1 col-span-2"><Label className="text-xs">Tema do evento</Label>
-              <Input value={form.tema_evento} onChange={(e) => setForm({ ...form, tema_evento: e.target.value })} /></div>
+              <Input {...register("tema_evento")} /></div>
             <div className="space-y-1"><Label className="text-xs">Data pretendida</Label>
-              <Input type="date" value={form.data_pretendida} onChange={(e) => setForm({ ...form, data_pretendida: e.target.value })} /></div>
+              <Input type="date" {...register("data_pretendida")} />
+              {errors.data_pretendida && <div className="text-[11px] text-rose-500">{errors.data_pretendida.message}</div>}
+            </div>
             <div className="space-y-1"><Label className="text-xs">Cidade</Label>
-              <Input value={form.cidade_evento} onChange={(e) => setForm({ ...form, cidade_evento: e.target.value })} /></div>
+              <Input {...register("cidade_evento")} /></div>
             <div className="space-y-1">
               <Label className="text-xs">Formato</Label>
-              <Select value={form.formato} onValueChange={(v) => setForm({ ...form, formato: v })}>
+              <Select value={watch("formato") ?? ""} onValueChange={(v) => setValue("formato", v)}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="presencial">Presencial</SelectItem>
@@ -148,10 +190,12 @@ export function NewLeadDialog() {
               </Select>
             </div>
             <div className="space-y-1"><Label className="text-xs">Orçamento estimado</Label>
-              <Input type="number" value={form.orcamento_est} onChange={(e) => setForm({ ...form, orcamento_est: e.target.value })} /></div>
+              <Input type="number" {...register("orcamento_est")} />
+              {errors.orcamento_est && <div className="text-[11px] text-rose-500">{errors.orcamento_est.message as string}</div>}
+            </div>
             <div className="space-y-1 col-span-2">
               <Label className="text-xs">Origem</Label>
-              <Select value={form.origem} onValueChange={(v) => setForm({ ...form, origem: v })}>
+              <Select value={watch("origem")} onValueChange={(v) => setValue("origem", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ORIGENS.map((o) => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
@@ -161,10 +205,12 @@ export function NewLeadDialog() {
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Descrição</Label>
-            <Textarea rows={3} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+            <Textarea rows={3} {...register("descricao")} />
           </div>
-        </div>
-        <DialogFooter><Button onClick={() => criar.mutate()} disabled={criar.isPending}>Criar atendimento</Button></DialogFooter>
+          <DialogFooter>
+            <Button type="submit" disabled={criar.isPending}>Criar atendimento</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

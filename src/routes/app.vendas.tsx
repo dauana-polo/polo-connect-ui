@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { VendaDrawer } from "@/components/vendas/VendaDrawer";
 import { formatBRL } from "@/lib/crm/constants";
 import { TrendingUp, Percent, Wallet, Receipt, Building2, Pencil } from "lucide-react";
+import { Can } from "@/components/shared/Can";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
 
 export const Route = createFileRoute("/app/vendas")({ component: VendasPage });
 
@@ -40,7 +43,7 @@ function VendasPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerId, setDrawerId] = useState<string | null>(null);
 
-  const { data: vendas = [], isLoading } = useQuery({
+  const { data: vendas = [], isLoading, error, refetch } = useQuery({
     queryKey: ["vendas-lista"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -103,7 +106,19 @@ function VendasPage() {
   };
   const empresaInitial = (id: string | null) => (empresaLabel(id)[0] ?? "?").toUpperCase();
 
-  if (!isLoading && vendas.length === 0) {
+  if (isLoading) {
+    return (<>
+      <AppTopbar title="Vendas & Tributação" breadcrumb={["Comercial", "Vendas"]} />
+      <LoadingState label="Carregando vendas…" />
+    </>);
+  }
+  if (error) {
+    return (<>
+      <AppTopbar title="Vendas & Tributação" breadcrumb={["Comercial", "Vendas"]} />
+      <ErrorState message={(error as Error).message} onRetry={() => refetch()} />
+    </>);
+  }
+  if (vendas.length === 0) {
     return (
       <>
         <AppTopbar title="Vendas & Tributação" breadcrumb={["Comercial", "Vendas"]} />
@@ -218,10 +233,12 @@ function VendasPage() {
               <div className="rounded-lg border bg-muted/30 p-3 mb-4">
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="text-muted-foreground">Empresa emissora</span>
-                  <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setDrawerId(v.id)}>
-                    <Pencil className="h-3 w-3 mr-1" />
-                    Editar
-                  </Button>
+                  <Can resource="vendas" action="edit">
+                    <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setDrawerId(v.id)}>
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                  </Can>
                 </div>
                 <div className="font-semibold">{empresaLabel(v.empresa_polo_id)}</div>
               </div>
@@ -286,10 +303,12 @@ function VendasPage() {
                   )}
                 </div>
 
-                <Button className="w-full" onClick={() => setDrawerId(v.id)}>
-                  <Pencil className="h-4 w-4 mr-1.5" />
-                  Editar venda
-                </Button>
+                <Can resource="vendas" action="edit">
+                  <Button className="w-full" onClick={() => setDrawerId(v.id)}>
+                    <Pencil className="h-4 w-4 mr-1.5" />
+                    Editar venda
+                  </Button>
+                </Can>
               </div>
             </Card>
           </div>

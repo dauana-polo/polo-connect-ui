@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
 import { AppTopbar } from "@/components/AppSidebar";
 import { Card } from "@/components/ui/card";
@@ -9,9 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Mail, Phone, FileText, Calendar, TrendingUp, Search, Loader2, CheckCircle2, Plus, MapPin } from "lucide-react";
+import { Building2, Mail, Phone, FileText, Calendar, TrendingUp, Search, Loader2, CheckCircle2, Plus, MapPin, Trash2 } from "lucide-react";
+import { Can } from "@/components/shared/Can";
+import { AsyncState } from "@/components/shared/AsyncState";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { usePermissions } from "@/hooks/usePermissions";
+import { requiredString, optionalEmail, phoneSchema, cnpjSchema, cepSchema } from "@/lib/validators";
 
 export const Route = createFileRoute("/app/clientes")({ component: ClientesPage });
 
@@ -20,11 +27,14 @@ const BRL = (v: number | null | undefined) =>
 
 function ClientesPage() {
   const qc = useQueryClient();
+  const { can } = usePermissions();
+  const canEdit = can("clientes", "edit");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [busca, setBusca] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const { data: clientes = [], isLoading } = useQuery({
+  const { data: clientes = [], isLoading, error, refetch } = useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
       const { data, error } = await supabase.from("clientes")
@@ -38,6 +48,20 @@ function ClientesPage() {
     !busca || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""}`.toLowerCase().includes(busca.toLowerCase())
   );
   const current = clientes.find((c: any) => c.id === selectedId) ?? filtered[0];
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("clientes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cliente excluído");
+      setConfirmDelete(null);
+      setSelectedId(null);
+      qc.invalidateQueries({ queryKey: ["clientes"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir. Verifique se há leads/vendas vinculados."),
+  });
 
   const { data: contatos = [] } = useQuery({
     queryKey: ["cliente-contatos", current?.id],
@@ -71,36 +95,48 @@ function ClientesPage() {
       <AppTopbar title="Clientes — Cadastro 360°" breadcrumb={["Cadastros", "Clientes"]} />
       <div className="flex-1 overflow-auto p-4 md:p-6 grid grid-cols-12 gap-4">
         <div className="col-span-12 lg:col-span-4 xl:col-span-3 space-y-2">
-          <Button className="w-full" onClick={() => { setShowNew(true); setSelectedId(null); }}><Plus className="h-4 w-4" /> Novo cliente</Button>
+          <Can resource="clientes" action="edit">
+            <Button className="w-full" onClick={() => { setShowNew(true); setSelectedId(null); }}><Plus className="h-4 w-4" /> Novo cliente</Button>
+          </Can>
           <div className="flex items-center gap-2 h-10 px-3 rounded-lg border bg-card">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input className="flex-1 bg-transparent outline-none text-sm" placeholder="Buscar…" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
           <div className="text-xs uppercase font-semibold text-muted-foreground px-2 mt-3 mb-1">Base ({clientes.length})</div>
-          {isLoading && <div className="text-sm text-muted-foreground p-3">Carregando…</div>}
-          <div className="space-y-1.5 max-h-[70vh] overflow-y-auto">
-            {filtered.map((x: any) => (
-              <button
-                key={x.id}
-                onClick={() => { setSelectedId(x.id); setShowNew(false); }}
-                className={`w-full text-left p-3 rounded-lg border transition ${current?.id === x.id && !showNew ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-500 grid place-items-center text-white font-bold text-sm">
-                    {(x.razao_social ?? "?")[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{x.nome_fantasia || x.razao_social}</div>
-                    <div className="text-xs text-muted-foreground truncate">{x.segmento ?? "—"} · {BRL(x.total_gasto)}</div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+          <AsyncState
+            loading={isLoading}
+            error={error}
+            data={filtered}
+            onRetry={() => refetch()}
+            loadingLabel="Carregando clientes…"
+            emptyTitle={busca ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
+          >
+            {(list) => (
+              <div className="space-y-1.5 max-h-[70vh] overflow-y-auto">
+                {list.map((x: any) => (
+                  <button
+                    key={x.id}
+                    onClick={() => { setSelectedId(x.id); setShowNew(false); }}
+                    className={`w-full text-left p-3 rounded-lg border transition ${current?.id === x.id && !showNew ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-500 grid place-items-center text-white font-bold text-sm">
+                        {(x.razao_social ?? "?")[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm truncate">{x.nome_fantasia || x.razao_social}</div>
+                        <div className="text-xs text-muted-foreground truncate">{x.segmento ?? "—"} · {BRL(x.total_gasto)}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </AsyncState>
         </div>
 
         <div className="col-span-12 lg:col-span-8 xl:col-span-9 space-y-4">
-          {showNew ? (
+          {showNew && canEdit ? (
             <NovoClienteForm onClose={() => setShowNew(false)} onSaved={(id) => { setShowNew(false); setSelectedId(id); qc.invalidateQueries({ queryKey: ["clientes"] }); }} />
           ) : current ? (
             <>
@@ -122,6 +158,16 @@ function ClientesPage() {
                       </div>
                     </div>
                   </div>
+                  <Can resource="clientes" action="edit">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => setConfirmDelete(current.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                    </Button>
+                  </Can>
                 </div>
               </Card>
 
@@ -215,10 +261,22 @@ function ClientesPage() {
               </Tabs>
             </>
           ) : (
-            <Card className="p-12 text-center text-sm text-muted-foreground">Selecione um cliente ao lado ou crie um novo.</Card>
+            <Card className="p-12 text-center text-sm text-muted-foreground">
+              {clientes.length === 0 ? "Nenhum cliente cadastrado. Comece criando um novo." : "Selecione um cliente ao lado ou crie um novo."}
+            </Card>
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={(v) => !v && setConfirmDelete(null)}
+        title="Excluir cliente?"
+        description="Esta ação é permanente. Não será possível se houver leads, propostas ou vendas vinculadas."
+        destructive
+        confirmLabel="Excluir"
+        onConfirm={() => { if (confirmDelete) excluir.mutate(confirmDelete); }}
+      />
     </>
   );
 }
@@ -237,21 +295,52 @@ type Lookup = {
   bairro?: string; municipio?: string; uf?: string; descricao_situacao_cadastral?: string;
 };
 
+const clienteSchema = z.object({
+  cnpj: cnpjSchema.optional().or(z.literal("")),
+  razao_social: requiredString("Razão social"),
+  nome_fantasia: z.string().trim().optional(),
+  segmento: z.string().trim().optional(),
+  cep: cepSchema.optional().or(z.literal("")),
+  logradouro: z.string().trim().optional(),
+  bairro: z.string().trim().optional(),
+  cidade: z.string().trim().optional(),
+  estado: z.string().trim().max(2, "Use a sigla (2 letras)").optional(),
+  contato_nome: z.string().trim().optional(),
+  contato_email: optionalEmail,
+  contato_tel: phoneSchema.optional().or(z.literal("")),
+});
+type ClienteForm = z.infer<typeof clienteSchema>;
+
 function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
-  const [cnpj, setCnpj] = useState("");
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<any>({
-    razao_social: "", nome_fantasia: "", segmento: "", cep: "", logradouro: "", bairro: "", cidade: "", estado: "",
-    contato_nome: "", contato_email: "", contato_tel: "",
-  });
   const [err, setErr] = useState<string | null>(null);
 
+  const form = useForm<ClienteForm>({
+    resolver: zodResolver(clienteSchema),
+    defaultValues: {
+      cnpj: "", razao_social: "", nome_fantasia: "", segmento: "",
+      cep: "", logradouro: "", bairro: "", cidade: "", estado: "",
+      contato_nome: "", contato_email: "", contato_tel: "",
+    },
+  });
+
   const salvar = useMutation({
-    mutationFn: async () => {
-      if (!form.razao_social) throw new Error("Razão social é obrigatória");
-      const { data, error } = await supabase.from("clientes").insert({
-        ...form, cnpj: cnpj.replace(/\D/g, "") || null,
-      }).select("id").single();
+    mutationFn: async (values: ClienteForm) => {
+      const payload = {
+        razao_social: values.razao_social,
+        nome_fantasia: values.nome_fantasia || null,
+        segmento: values.segmento || null,
+        cnpj: values.cnpj ? values.cnpj.replace(/\D/g, "") : null,
+        cep: values.cep || null,
+        logradouro: values.logradouro || null,
+        bairro: values.bairro || null,
+        cidade: values.cidade || null,
+        estado: values.estado || null,
+        contato_nome: values.contato_nome || null,
+        contato_email: values.contato_email || null,
+        contato_tel: values.contato_tel || null,
+      };
+      const { data, error } = await supabase.from("clientes").insert(payload).select("id").single();
       if (error) throw error;
       return data.id as string;
     },
@@ -260,24 +349,27 @@ function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (
   });
 
   async function consultar() {
-    const clean = cnpj.replace(/\D/g, "");
+    const clean = (form.getValues("cnpj") ?? "").replace(/\D/g, "");
     if (clean.length !== 14) { setErr("CNPJ deve ter 14 dígitos"); return; }
     setErr(null); setLoading(true);
     try {
       const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${clean}`);
       if (!r.ok) throw new Error();
       const j: Lookup = await r.json();
-      setForm((f: any) => ({
-        ...f,
-        razao_social: j.razao_social ?? f.razao_social,
-        nome_fantasia: j.nome_fantasia ?? f.nome_fantasia,
-        cep: j.cep ?? f.cep, logradouro: j.logradouro ?? f.logradouro,
-        bairro: j.bairro ?? f.bairro, cidade: j.municipio ?? f.cidade, estado: j.uf ?? f.estado,
-      }));
+      form.setValue("razao_social", j.razao_social ?? form.getValues("razao_social"), { shouldValidate: true });
+      form.setValue("nome_fantasia", j.nome_fantasia ?? form.getValues("nome_fantasia"));
+      form.setValue("cep", j.cep ?? form.getValues("cep"));
+      form.setValue("logradouro", j.logradouro ?? form.getValues("logradouro"));
+      form.setValue("bairro", j.bairro ?? form.getValues("bairro"));
+      form.setValue("cidade", j.municipio ?? form.getValues("cidade"));
+      form.setValue("estado", j.uf ?? form.getValues("estado"));
     } catch {
       setErr("Falha na consulta. Preencha manualmente.");
     } finally { setLoading(false); }
   }
+
+  const showLoaded = !!form.watch("razao_social");
+  const errors = form.formState.errors;
 
   return (
     <Card className="p-6 space-y-5">
@@ -286,51 +378,58 @@ function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (
         <Button variant="ghost" onClick={onClose}>Cancelar</Button>
       </div>
 
-      <div className="flex gap-2 items-end">
-        <div className="flex-1">
-          <Label>CNPJ</Label>
-          <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" />
+      <form onSubmit={form.handleSubmit((v) => salvar.mutate(v))} className="space-y-5">
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <Label>CNPJ</Label>
+            <Input {...form.register("cnpj")} placeholder="00.000.000/0001-00" />
+            {errors.cnpj && <p className="text-xs text-rose-500 mt-1">{errors.cnpj.message}</p>}
+          </div>
+          <Button type="button" onClick={consultar} disabled={loading} variant="outline">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Consultar
+          </Button>
         </div>
-        <Button onClick={consultar} disabled={loading} variant="outline">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Consultar
-        </Button>
-      </div>
-      {err && <div className="text-xs text-rose-500">{err}</div>}
-      {form.razao_social && (
-        <div className="rounded-lg border-2 border-emerald-500/30 bg-emerald-500/5 p-2 text-xs flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Dados carregados. Revise antes de salvar.
+        {err && <div className="text-xs text-rose-500">{err}</div>}
+        {showLoaded && (
+          <div className="rounded-lg border-2 border-emerald-500/30 bg-emerald-500/5 p-2 text-xs flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Dados carregados. Revise antes de salvar.
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <FieldRegister label="Razão social *" error={errors.razao_social?.message} {...form.register("razao_social")} />
+          <FieldRegister label="Nome fantasia" {...form.register("nome_fantasia")} />
+          <FieldRegister label="Segmento" {...form.register("segmento")} />
+          <FieldRegister label="CEP" error={errors.cep?.message} {...form.register("cep")} />
+          <FieldRegister label="Logradouro" {...form.register("logradouro")} />
+          <FieldRegister label="Bairro" {...form.register("bairro")} />
+          <FieldRegister label="Cidade" {...form.register("cidade")} />
+          <FieldRegister label="Estado (UF)" error={errors.estado?.message} {...form.register("estado")} />
+          <FieldRegister label="Contato — Nome" {...form.register("contato_nome")} />
+          <FieldRegister label="Contato — E-mail" error={errors.contato_email?.message} {...form.register("contato_email")} />
+          <FieldRegister label="Contato — Telefone" error={errors.contato_tel?.message} {...form.register("contato_tel")} />
         </div>
-      )}
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <FieldInput label="Razão social *" value={form.razao_social} onChange={(v) => setForm({ ...form, razao_social: v })} />
-        <FieldInput label="Nome fantasia" value={form.nome_fantasia} onChange={(v) => setForm({ ...form, nome_fantasia: v })} />
-        <FieldInput label="Segmento" value={form.segmento} onChange={(v) => setForm({ ...form, segmento: v })} />
-        <FieldInput label="CEP" value={form.cep} onChange={(v) => setForm({ ...form, cep: v })} />
-        <FieldInput label="Logradouro" value={form.logradouro} onChange={(v) => setForm({ ...form, logradouro: v })} />
-        <FieldInput label="Bairro" value={form.bairro} onChange={(v) => setForm({ ...form, bairro: v })} />
-        <FieldInput label="Cidade" value={form.cidade} onChange={(v) => setForm({ ...form, cidade: v })} />
-        <FieldInput label="Estado" value={form.estado} onChange={(v) => setForm({ ...form, estado: v })} />
-        <FieldInput label="Contato — Nome" value={form.contato_nome} onChange={(v) => setForm({ ...form, contato_nome: v })} />
-        <FieldInput label="Contato — E-mail" value={form.contato_email} onChange={(v) => setForm({ ...form, contato_email: v })} />
-        <FieldInput label="Contato — Telefone" value={form.contato_tel} onChange={(v) => setForm({ ...form, contato_tel: v })} />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-3 border-t">
-        <Button variant="outline" onClick={onClose}>Cancelar</Button>
-        <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>
-          {salvar.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Salvar cliente
-        </Button>
-      </div>
+        <div className="flex justify-end gap-2 pt-3 border-t">
+          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" disabled={salvar.isPending}>
+            {salvar.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Salvar cliente
+          </Button>
+        </div>
+      </form>
     </Card>
   );
 }
 
-function FieldInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+const FieldRegister = forwardRef<
+  HTMLInputElement,
+  { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>
+>(function FieldRegister({ label, error, ...rest }, ref) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input ref={ref} {...rest} />
+      {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
     </div>
   );
-}
+});
