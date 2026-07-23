@@ -233,10 +233,12 @@ function VendasPage() {
               <div className="rounded-lg border bg-muted/30 p-3 mb-4">
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="text-muted-foreground">Empresa emissora</span>
-                  <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setDrawerId(v.id)}>
-                    <Pencil className="h-3 w-3 mr-1" />
-                    Editar
-                  </Button>
+                  <Can resource="vendas" action="edit">
+                    <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setDrawerId(v.id)}>
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                  </Can>
                 </div>
                 <div className="font-semibold">{empresaLabel(v.empresa_polo_id)}</div>
               </div>
