@@ -184,9 +184,13 @@ function CRM() {
               </SelectContent>
             </Select>
           </div>
-          <NewLeadDialog />
+          <Can resource="crm" action="edit"><NewLeadDialog /></Can>
         </div>
 
+        {isLoading && <LoadingState label="Carregando leads…" />}
+        {error && <ErrorState message={(error as Error).message} onRetry={() => refetch()} />}
+
+        {!isLoading && !error && (<>
         {/* Mobile: accordion list. Desktop: kanban grid */}
         <div className="md:hidden space-y-2">
           {ETAPAS.map((stage) => {
