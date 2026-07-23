@@ -133,6 +133,11 @@ function Propostas() {
           </TabsList>
 
           <TabsContent value="lista">
+            {isLoading ? (
+              <LoadingState label="Carregando propostas…" />
+            ) : error ? (
+              <ErrorState message={(error as Error).message} onRetry={() => refetch()} />
+            ) : (
             <Card>
               <CardContent className="p-0 overflow-x-auto">
                 <table className="w-full text-sm">
@@ -145,6 +150,7 @@ function Propostas() {
                       <th className="text-left font-medium px-2 py-3">Criada em</th>
                       <th className="text-left font-medium px-2 py-3">Consultor</th>
                       <th className="text-left font-medium px-5 py-3">Status</th>
+                      <th className="px-2 py-3" />
                     </tr>
                   </thead>
                   <tbody>
@@ -176,11 +182,24 @@ function Propostas() {
                             {statusLabel[p.status] ?? p.status}
                           </Badge>
                         </td>
+                        <td className="px-2 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <Can resource="propostas" action="edit">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              onClick={() => setConfirmDeleteId(p.id)}
+                              aria-label="Excluir proposta"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </Can>
+                        </td>
                       </tr>
                     ))}
-                    {!isLoading && propostas.length === 0 && (
+                    {propostas.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground text-sm">
+                        <td colSpan={8} className="px-5 py-10 text-center text-muted-foreground text-sm">
                           Nenhuma proposta ainda. Crie uma na aba "Nova Proposta".
                         </td>
                       </tr>
@@ -189,6 +208,7 @@ function Propostas() {
                 </table>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="nova">
