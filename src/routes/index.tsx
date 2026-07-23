@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { palestrantes } from "@/lib/mock-data";
-import { ArrowRight, ArrowUpRight, Award, BadgeCheck, Building2, Compass, Layers, MessagesSquare, Play, Quote, Sparkle, Star, Target, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowRight, ArrowUpRight, BadgeCheck, Building2, Compass, Layers, MessagesSquare, Play, Quote, Sparkle, Star, Target, UserRound } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
@@ -18,10 +19,30 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+type Destaque = {
+  id: string;
+  nome: string;
+  foto_url: string | null;
+  temas: string[] | null;
+  avaliacao_media: number | null;
+  total_eventos: number | null;
+};
+
 const logos = ["Itaú", "Vale", "Magazine Luiza", "Natura", "Ambev", "XP Inc", "Bradesco", "Stone"];
 const areas = ["Liderança", "Cultura", "Inovação", "Vendas", "ESG", "Alta Performance", "Tecnologia", "Comunicação"];
 
 function Home() {
+  const [destaques, setDestaques] = useState<Destaque[]>([]);
+  useEffect(() => {
+    supabase
+      .from("palestrantes")
+      .select("id,nome,foto_url,temas,avaliacao_media,total_eventos")
+      .eq("publicar_site", true)
+      .eq("status", "ativo")
+      .order("total_eventos", { ascending: false, nullsFirst: false })
+      .limit(6)
+      .then(({ data }) => setDestaques((data ?? []) as Destaque[]));
+  }, []);
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -130,26 +151,34 @@ function Home() {
           </div>
 
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {palestrantes.slice(0, 6).map((p) => (
+            {destaques.length === 0 ? (
+              <div className="col-span-full rounded-md border bg-card py-16 text-center text-sm text-muted-foreground">
+                Vitrine em atualização — em breve novos especialistas publicados.
+              </div>
+            ) : destaques.map((p) => (
               <Link key={p.id} to="/palestrante/$id" params={{ id: p.id }} className="group">
                 <article className="overflow-hidden rounded-md border bg-card transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_30px_60px_-30px_color-mix(in_oklab,var(--ink)_40%,transparent)]">
                   <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                    <img src={p.foto.replace("300", "800")} alt={p.nome} className="h-full w-full object-cover grayscale transition-all duration-700 group-hover:scale-[1.03] group-hover:grayscale-0" />
+                    {p.foto_url ? (
+                      <img src={p.foto_url} alt={p.nome} className="h-full w-full object-cover grayscale transition-all duration-700 group-hover:scale-[1.03] group-hover:grayscale-0" />
+                    ) : (
+                      <div className="grid h-full place-items-center text-muted-foreground"><UserRound className="h-16 w-16" /></div>
+                    )}
                     <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[var(--ink)]/85 via-[var(--ink)]/30 to-transparent" />
                     <div className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white backdrop-blur-md">
                       <Sparkle className="h-3 w-3 text-[var(--brand)]" /> Curado
                     </div>
                     <div className="absolute inset-x-0 bottom-0 p-5 text-white">
                       <div className="text-lg font-semibold tracking-tight">{p.nome}</div>
-                      <div className="mt-1 text-xs text-white/70">{p.temas.slice(0, 2).join(" · ")}</div>
+                      <div className="mt-1 text-xs text-white/70">{(p.temas ?? []).slice(0, 2).join(" · ")}</div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between px-5 py-4">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Star className="h-3.5 w-3.5 fill-[var(--brand)] text-[var(--brand)]" />
-                      <span className="font-medium text-foreground">{p.avaliacao}</span>
+                      <span className="font-medium text-foreground">{(p.avaliacao_media ?? 0).toFixed(1)}</span>
                       <span>·</span>
-                      <span>{p.eventos} eventos</span>
+                      <span>{p.total_eventos ?? 0} eventos</span>
                     </div>
                     <span className="text-xs font-medium text-[var(--brand)] underline-offset-4 group-hover:underline">Ver perfil →</span>
                   </div>

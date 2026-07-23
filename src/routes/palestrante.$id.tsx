@@ -1,24 +1,23 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { palestrantes } from "@/lib/mock-data";
-import { ArrowLeft, BadgeCheck, Building2, CheckCircle2, Globe2, Play, Quote, Sparkle, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
+import { ArrowLeft, BadgeCheck, Building2, CheckCircle2, Globe2, Play, Quote, Sparkle, Star, UserRound } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
 export const Route = createFileRoute("/palestrante/$id")({
-  head: ({ params }) => {
-    const p = palestrantes.find((x) => x.id === params.id);
-    return {
-      meta: [
-        { title: p ? `${p.nome} — Polo Palestrantes` : "Especialista — Polo" },
-        { name: "description", content: p?.bio ?? "Perfil de especialista." },
-        { property: "og:title", content: p ? `${p.nome} — Polo Palestrantes` : "Especialista — Polo" },
-        { property: "og:description", content: p?.bio ?? "" },
-        { property: "og:image", content: p?.foto.replace("300", "800") ?? "" },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: "Especialista — Polo Palestrantes" },
+      { name: "description", content: "Perfil de especialista curado pela Polo Palestrantes." },
+      { property: "og:title", content: "Especialista — Polo Palestrantes" },
+      { property: "og:description", content: "Perfil de especialista curado pela Polo Palestrantes." },
+    ],
+  }),
   component: PalestrantePage,
   notFoundComponent: () => (
     <div className="grid min-h-screen place-items-center">
@@ -30,33 +29,91 @@ export const Route = createFileRoute("/palestrante/$id")({
   ),
 });
 
+type Perfil = {
+  id: string;
+  nome: string;
+  bio: string | null;
+  mini_bio: string | null;
+  foto_url: string | null;
+  video_url: string | null;
+  temas: string[] | null;
+  formatos: string[] | null;
+  avaliacao_media: number | null;
+  total_eventos: number | null;
+  publicar_site: boolean | null;
+};
+
 const empresasAtendidas = ["Itaú", "Vale", "Natura", "Ambev", "XP Inc", "Bradesco", "Magazine Luiza", "Stone"];
+const diferenciais = [
+  "Curadoria consultiva por briefing",
+  "Conteúdo customizado ao contexto do cliente",
+  "Disponibilidade nacional e internacional",
+  "Suporte fim a fim: contrato, logística e execução",
+];
+const depoimentos = [
+  { c: "Itaú", q: "Conteúdo excepcional. Equipe satisfeita e impactada.", a: "Daniela Reis", r: "Diretora de RH" },
+  { c: "Vale", q: "Didática refinada e domínio absoluto do tema.", a: "Marco Lima", r: "CIO" },
+  { c: "Ambev", q: "Inspirador. Mudou nossa forma de pensar liderança.", a: "Patrícia Gomes", r: "VP People" },
+];
 
 function PalestrantePage() {
   const { id } = Route.useParams();
-  const p = palestrantes.find((x) => x.id === id);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [p, setP] = useState<Perfil | null>(null);
+  const [notFoundFlag, setNotFoundFlag] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    setError(null);
+    supabase
+      .from("palestrantes")
+      .select("id,nome,bio,mini_bio,foto_url,video_url,temas,formatos,avaliacao_media,total_eventos,publicar_site")
+      .eq("id", id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) setError(new Error(error.message));
+        else if (!data || !data.publicar_site) setNotFoundFlag(true);
+        else setP(data as Perfil);
+      })
+      .then(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, [id]);
+
+  if (notFoundFlag) throw notFound();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <LoadingState label="Carregando perfil..." />
+        <SiteFooter />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <div className="mx-auto max-w-3xl px-6 py-24">
+          <ErrorState onRetry={load} message={error.message} />
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
   if (!p) throw notFound();
 
-  const depoimentos = [
-    { c: "Itaú", q: "Conteúdo excepcional. Equipe satisfeita e impactada.", a: "Daniela Reis", r: "Diretora de RH" },
-    { c: "Vale", q: "Didática refinada e domínio absoluto do tema.", a: "Marco Lima", r: "CIO" },
-    { c: "Ambev", q: "Inspirador. Mudou nossa forma de pensar liderança.", a: "Patrícia Gomes", r: "VP People" },
-  ];
-
-  const diferenciais = [
-    "Presença em mais de 200 eventos corporativos por ano",
-    "Conteúdo customizado por briefing",
-    "Disponibilidade nacional e internacional",
-    "Conteúdo bilíngue (PT/EN)",
-  ];
+  const temas = p.temas ?? [];
+  const foto = p.foto_url;
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
-      {/* Banner */}
       <section className="relative isolate overflow-hidden bg-[var(--ink)] text-white">
-        <img src={p.foto.replace("300", "1400")} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25 grayscale" />
+        {foto ? <img src={foto} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25 grayscale" /> : null}
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--ink)] via-[var(--ink)]/85 to-[var(--ink)]/30" />
         <div className="absolute -right-32 top-0 h-[400px] w-[400px] rounded-full bg-[var(--brand)]/25 blur-[120px]" />
 
@@ -76,17 +133,18 @@ function PalestrantePage() {
               <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-white/70">
                 <span className="flex items-center gap-1.5">
                   <Star className="h-4 w-4 fill-[var(--brand)] text-[var(--brand)]" />
-                  <span className="font-medium text-white">{p.avaliacao}</span>
+                  <span className="font-medium text-white">{(p.avaliacao_media ?? 0).toFixed(1)}</span>
                 </span>
                 <span className="opacity-30">·</span>
-                <span>{p.eventos} eventos corporativos</span>
+                <span>{p.total_eventos ?? 0} eventos corporativos</span>
                 <span className="opacity-30">·</span>
                 <span className="flex items-center gap-1.5"><Globe2 className="h-3.5 w-3.5" /> PT · EN</span>
               </div>
-              <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/75">
-                {p.bio} Referência em sua área de atuação, com presença em TED,
-                Web Summit e principais convenções corporativas do Brasil.
-              </p>
+              {(p.bio || p.mini_bio) && (
+                <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/75">
+                  {p.bio ?? p.mini_bio}
+                </p>
+              )}
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="h-12 bg-[var(--brand)] px-6 text-white hover:bg-[var(--brand-dark)]" asChild>
                   <Link to="/orcamento">Solicitar curadoria</Link>
@@ -97,10 +155,13 @@ function PalestrantePage() {
               </div>
             </div>
 
-            {/* Video card */}
             <div className="md:col-span-5">
               <div className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.6)]">
-                <img src={p.foto.replace("300", "1000")} alt={p.nome} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                {foto ? (
+                  <img src={foto} alt={p.nome} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                ) : (
+                  <div className="grid h-full place-items-center text-white/60"><UserRound className="h-24 w-24" /></div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <button className="absolute inset-0 grid place-items-center">
                   <span className="grid h-16 w-16 place-items-center rounded-full bg-white/10 backdrop-blur-md ring-1 ring-white/30 transition group-hover:bg-[var(--brand)]">
@@ -117,24 +178,23 @@ function PalestrantePage() {
         </div>
       </section>
 
-      {/* Body */}
       <div className="mx-auto max-w-7xl px-6 py-20">
         <div className="grid gap-16 lg:grid-cols-12">
           <div className="space-y-16 lg:col-span-8">
-            {/* Temas */}
-            <section>
-              <div className="text-[11px] uppercase tracking-[0.28em] text-[var(--brand)]">Temas abordados</div>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em]">Conteúdos sob medida.</h2>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {[...p.temas, "Estratégia", "Transformação cultural", "Futuro do trabalho"].map((t) => (
-                  <Badge key={t} variant="outline" className="rounded-full border-border bg-card px-4 py-1.5 text-sm font-medium">
-                    {t}
-                  </Badge>
-                ))}
-              </div>
-            </section>
+            {temas.length > 0 && (
+              <section>
+                <div className="text-[11px] uppercase tracking-[0.28em] text-[var(--brand)]">Temas abordados</div>
+                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em]">Conteúdos sob medida.</h2>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {temas.map((t) => (
+                    <Badge key={t} variant="outline" className="rounded-full border-border bg-card px-4 py-1.5 text-sm font-medium">
+                      {t}
+                    </Badge>
+                  ))}
+                </div>
+              </section>
+            )}
 
-            {/* Diferenciais */}
             <section>
               <div className="text-[11px] uppercase tracking-[0.28em] text-[var(--brand)]">Diferenciais</div>
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em]">Por que líderes escolhem.</h2>
@@ -148,7 +208,6 @@ function PalestrantePage() {
               </ul>
             </section>
 
-            {/* Empresas */}
             <section>
               <div className="text-[11px] uppercase tracking-[0.28em] text-[var(--brand)]">Empresas atendidas</div>
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em]">Marcas que já levaram este especialista.</h2>
@@ -161,7 +220,6 @@ function PalestrantePage() {
               </div>
             </section>
 
-            {/* Depoimentos */}
             <section>
               <div className="text-[11px] uppercase tracking-[0.28em] text-[var(--brand)]">Depoimentos</div>
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em]">O que dizem os clientes.</h2>
@@ -180,7 +238,6 @@ function PalestrantePage() {
             </section>
           </div>
 
-          {/* Sticky CTA */}
           <aside className="lg:col-span-4">
             <div className="sticky top-24 space-y-5">
               <div className="overflow-hidden rounded-md border bg-card">
@@ -200,8 +257,7 @@ function PalestrantePage() {
                     <Link to="/orcamento">Falar com especialista</Link>
                   </Button>
                   <div className="space-y-2 border-t pt-4 text-sm">
-                    <Row k="Formatos" v="Presencial · Online · Híbrido" />
-                    <Row k="Duração" v="60 a 90 minutos" />
+                    <Row k="Formatos" v={(p.formatos ?? ["Presencial","Online","Híbrido"]).join(" · ")} />
                     <Row k="Idiomas" v="Português · Inglês" />
                     <Row k="Disponibilidade" v="Nacional e internacional" />
                   </div>
