@@ -1,25 +1,155 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { AppTopbar } from "@/components/AppSidebar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { palestrantes, palestrantesDetalhe, formatBRL, agendaEventos, contratos, contasPagar } from "@/lib/mock-data";
-import { Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, AlertCircle, Crown, Search, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { formatBRL } from "@/lib/crm/constants";
+import { Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, AlertCircle, Crown, Search, Plus, Pencil, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/app/palestrantes")({ component: PalestrantesPage });
 
+type Palestrante = {
+  id: string;
+  nome: string;
+  nome_artistico: string | null;
+  email: string;
+  telefone: string | null;
+  bio: string | null;
+  mini_bio: string | null;
+  foto_url: string | null;
+  video_url: string | null;
+  tipo_pessoa: "PF" | "PJ" | null;
+  cpf: string | null;
+  cnpj: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  insc_municipal: string | null;
+  regime: string | null;
+  cep: string | null; logradouro: string | null; numero: string | null; bairro: string | null;
+  cidade: string | null; estado: string | null;
+  banco: string | null; agencia: string | null; conta: string | null; tipo_conta: string | null; pix: string | null;
+  cache_min: number | null; cache_max: number | null; cache_padrao: number | null;
+  exclusivo: boolean | null;
+  temas: string[] | null;
+  formatos: string[] | null;
+  status: string | null;
+  publicar_site: boolean | null;
+  total_eventos: number | null;
+  avaliacao_media: number | null;
+};
+
+const emptyForm: Partial<Palestrante> = {
+  nome: "", email: "", tipo_pessoa: "PJ", regime: "simples", status: "ativo",
+  exclusivo: false, publicar_site: false, temas: [], formatos: [],
+};
+
 function PalestrantesPage() {
-  const [selectedId, setSelectedId] = useState(palestrantes[0].id);
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
-  const p = palestrantes.find((x) => x.id === selectedId)!;
-  const d = palestrantesDetalhe[selectedId];
-  const eventos = agendaEventos.filter((e) => e.palestrante === p.nome);
-  const ctos = contratos.filter((c) => true).slice(0, 2);
-  const pag = contasPagar.filter((c) => c.fornecedor === p.nome);
-  const lista = palestrantes.filter((x) => x.nome.toLowerCase().includes(q.toLowerCase()));
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [openForm, setOpenForm] = useState(false);
+  const [editing, setEditing] = useState<Partial<Palestrante> | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const { data: lista = [], isLoading } = useQuery({
+    queryKey: ["palestrantes"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("palestrantes").select("*").order("nome");
+      if (error) throw error;
+      return (data ?? []) as Palestrante[];
+    },
+  });
+
+  const filtered = useMemo(
+    () => lista.filter((p) => p.nome.toLowerCase().includes(q.toLowerCase())),
+    [lista, q],
+  );
+
+  const p = lista.find((x) => x.id === selectedId) ?? lista[0] ?? null;
+
+  // Load vinculos: vendas + agenda + contratos + contas_pagar do palestrante selecionado
+  const { data: vinculos } = useQuery({
+    queryKey: ["palestrante-vinculos", p?.id],
+    enabled: !!p,
+    queryFn: async () => {
+      const [vendas, contratos, contasPagar] = await Promise.all([
+        supabase.from("vendas").select("id,titulo,data_evento,cidade,valor_total,cache_palestr,status,cliente:clientes(razao_social)").eq("palestrante_id", p!.id).order("data_evento", { ascending: false }),
+        supabase.from("contratos").select("id,numero,status,tipo,cliente:clientes(razao_social)").in("venda_id", []),
+        supabase.from("contas_pagar").select("id,descricao,valor,vencimento,status").eq("palestrante_id", p!.id).order("vencimento", { ascending: false }),
+      ]);
+      return {
+        vendas: (vendas.data ?? []) as any[],
+        contratos: (contratos.data ?? []) as any[],
+        contasPagar: (contasPagar.data ?? []) as any[],
+      };
+    },
+  });
+
+  const vendasAtivas = (vinculos?.vendas ?? []).filter((v) => v.status !== "cancelado");
+
+  const save = useMutation({
+    mutationFn: async (form: Partial<Palestrante>) => {
+      if (!form.nome || !form.email) throw new Error("Nome e e-mail são obrigatórios.");
+      const payload = { ...form } as any;
+      // Sanitize numbers
+      ["cache_min", "cache_max", "cache_padrao"].forEach((k) => {
+        if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
+        else if (payload[k] !== null) payload[k] = Number(payload[k]);
+      });
+      if (payload.id) {
+        const { error } = await supabase.from("palestrantes").update(payload).eq("id", payload.id);
+        if (error) throw error;
+        return payload.id as string;
+      } else {
+        const { data, error } = await supabase.from("palestrantes").insert(payload).select("id").single();
+        if (error) throw error;
+        return data.id as string;
+      }
+    },
+    onSuccess: (id) => {
+      toast.success("Palestrante salvo");
+      setOpenForm(false); setEditing(null);
+      setSelectedId(id);
+      qc.invalidateQueries({ queryKey: ["palestrantes"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("palestrantes").delete().eq("id", id);
+      if (error) {
+        if (error.code === "23503" || /foreign key|violates/i.test(error.message)) {
+          throw new Error("Não é possível excluir: o palestrante está vinculado a vendas/propostas/contratos ativos. Cancele ou remova esses vínculos primeiro.");
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Palestrante removido");
+      setConfirmDelete(false); setSelectedId(null);
+      qc.invalidateQueries({ queryKey: ["palestrantes"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const openNew = () => { setEditing({ ...emptyForm }); setOpenForm(true); };
+  const openEdit = () => { if (p) { setEditing({ ...p }); setOpenForm(true); } };
 
   return (
     <>
@@ -31,22 +161,36 @@ function PalestrantesPage() {
               <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar..." className="pl-8 h-9" />
             </div>
-            <Button size="sm"><Plus className="h-4 w-4" /></Button>
+            <Button size="sm" onClick={openNew}><Plus className="h-4 w-4" /></Button>
           </div>
-          {lista.map((x) => (
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground p-4">Carregando…</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-sm text-muted-foreground p-4 border rounded-lg text-center">
+              Nenhum palestrante cadastrado. Clique em <b>+</b> para começar.
+            </div>
+          ) : filtered.map((x) => (
             <button
               key={x.id}
               onClick={() => setSelectedId(x.id)}
-              className={`w-full text-left p-3 rounded-lg border transition ${selectedId === x.id ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
+              className={`w-full text-left p-3 rounded-lg border transition ${p?.id === x.id ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
             >
               <div className="flex items-center gap-3">
-                <img src={x.foto} className="h-10 w-10 rounded-full" alt="" />
+                {x.foto_url ? (
+                  <img src={x.foto_url} className="h-10 w-10 rounded-full object-cover" alt="" />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-muted grid place-items-center text-xs font-semibold">
+                    {x.nome[0]}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm truncate flex items-center gap-1">
                     {x.nome}
-                    {palestrantesDetalhe[x.id]?.comercial.exclusivo && <Crown className="h-3 w-3 text-amber-500" />}
+                    {x.exclusivo && <Crown className="h-3 w-3 text-amber-500" />}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">{formatBRL(x.valor)} · ⭐ {x.avaliacao}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {formatBRL(x.cache_padrao ?? 0)} · ⭐ {Number(x.avaliacao_media ?? 0).toFixed(1)}
+                  </div>
                 </div>
               </div>
             </button>
@@ -54,175 +198,203 @@ function PalestrantesPage() {
         </div>
 
         <div className="col-span-12 lg:col-span-9 space-y-5">
-          <Card className="p-6">
-            <div className="flex items-start justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <img src={p.foto} alt="" className="h-20 w-20 rounded-xl ring-2 ring-border" />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold">{p.nome}</h2>
-                    {d?.comercial.exclusivo && <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"><Crown className="h-3 w-3 mr-1" /> Exclusivo</Badge>}
-                    <Badge variant="outline">{d?.fiscal.tipo}</Badge>
-                  </div>
-                  <div className="text-sm text-muted-foreground">{d?.comercial.perfil}</div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {p.temas.map((t) => <Badge key={t} variant="secondary">{t}</Badge>)}
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {p.avaliacao}</span>
-                    <span>{p.eventos} eventos realizados</span>
-                    <span>Cachê padrão: <span className="font-semibold text-foreground">{formatBRL(d?.operacional.cachePadrao ?? p.valor)}</span></span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">Editar</Button>
-                <Button size="sm">Nova proposta</Button>
-              </div>
-            </div>
-          </Card>
-
-          <Tabs defaultValue="fiscal">
-            <TabsList className="flex-wrap">
-              <TabsTrigger value="fiscal"><Landmark className="h-3.5 w-3.5 mr-1" /> Fiscal & Endereço</TabsTrigger>
-              <TabsTrigger value="bancario"><Wallet className="h-3.5 w-3.5 mr-1" /> Bancário</TabsTrigger>
-              <TabsTrigger value="operacional"><AlertCircle className="h-3.5 w-3.5 mr-1" /> Operacional</TabsTrigger>
-              <TabsTrigger value="comercial"><Briefcase className="h-3.5 w-3.5 mr-1" /> Comercial</TabsTrigger>
-              <TabsTrigger value="agenda"><Calendar className="h-3.5 w-3.5 mr-1" /> Agenda</TabsTrigger>
-              <TabsTrigger value="docs"><FileText className="h-3.5 w-3.5 mr-1" /> Contratos & $</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="fiscal">
-              <Card className="p-5 grid md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                <Field label="Tipo">{d?.fiscal.tipo}</Field>
-                <Field label={d?.fiscal.tipo === "PJ" ? "CNPJ" : "CPF"}>{d?.fiscal.documento}</Field>
-                {d?.fiscal.razaoSocial && <Field label="Razão social">{d.fiscal.razaoSocial}</Field>}
-                {d?.fiscal.nomeFantasia && <Field label="Nome fantasia">{d.fiscal.nomeFantasia}</Field>}
-                {d?.fiscal.inscricaoMunicipal && <Field label="Inscrição municipal">{d.fiscal.inscricaoMunicipal}</Field>}
-                {d?.fiscal.regime && <Field label="Regime tributário"><Badge variant="outline">{d.fiscal.regime}</Badge></Field>}
-                <div className="md:col-span-2 mt-3 pt-3 border-t">
-                  <div className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-2"><MapPin className="h-3 w-3" /> Endereço</div>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <Field label="CEP">{d?.endereco.cep}</Field>
-                    <Field label="Rua">{d?.endereco.rua}</Field>
-                    <Field label="Número">{d?.endereco.numero}</Field>
-                    <Field label="Bairro">{d?.endereco.bairro}</Field>
-                    <Field label="Cidade">{d?.endereco.cidade}</Field>
-                    <Field label="Estado">{d?.endereco.estado}</Field>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="bancario">
-              <Card className="p-5 grid md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                <Field label="Banco">{d?.banco.banco}</Field>
-                <Field label="Agência">{d?.banco.agencia}</Field>
-                <Field label="Conta">{d?.banco.conta}</Field>
-                <Field label="Chave PIX"><span className="font-mono">{d?.banco.pix}</span></Field>
-                <Field label="Favorecido">{d?.banco.favorecido}</Field>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="operacional">
-              <div className="grid md:grid-cols-2 gap-5">
-                <Card className="p-5">
-                  <h4 className="font-semibold mb-3">Exigências especiais</h4>
-                  <ul className="space-y-1.5 text-sm">
-                    {d?.operacional.exigencias.map((e, i) => <li key={i} className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> {e}</li>)}
-                  </ul>
-                  <h4 className="font-semibold mt-5 mb-3">Restrições alimentares</h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {d?.operacional.restricoes.length ? d.operacional.restricoes.map((r) => <Badge key={r} variant="secondary">{r}</Badge>) : <span className="text-xs text-muted-foreground">Nenhuma</span>}
-                  </div>
-                </Card>
-                <Card className="p-5">
-                  <h4 className="font-semibold mb-3">Necessidades técnicas</h4>
-                  <ul className="space-y-1.5 text-sm">
-                    {d?.operacional.tecnicas.map((e, i) => <li key={i} className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> {e}</li>)}
-                  </ul>
-                  <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                    <Field label="Acompanhantes">{d?.operacional.acompanhantes}</Field>
-                    <Field label="Cachê padrão">{formatBRL(d?.operacional.cachePadrao ?? 0)}</Field>
-                  </div>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="comercial">
-              <Card className="p-5 grid md:grid-cols-3 gap-x-8 gap-y-4 text-sm">
-                <Field label="Exclusivo Polo">{d?.comercial.exclusivo ? <Badge className="bg-amber-500">Sim</Badge> : <Badge variant="outline">Não</Badge>}</Field>
-                <Field label="Valor médio">{formatBRL(d?.comercial.valorMedio ?? 0)}</Field>
-                <Field label="Perfil">{d?.comercial.perfil}</Field>
-                <div className="md:col-span-3">
-                  <div className="text-xs text-muted-foreground mb-1">Bio resumida</div>
-                  <p className="text-sm">{p.bio}</p>
-                </div>
-                <div className="md:col-span-3">
-                  <div className="text-xs text-muted-foreground mb-2">Temas</div>
-                  <div className="flex flex-wrap gap-1.5">{p.temas.map(t => <Badge key={t}>{t}</Badge>)}</div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="agenda">
-              <Card className="p-5">
-                <h4 className="font-semibold mb-3">Próximos eventos & histórico</h4>
-                <div className="space-y-2">
-                  {(eventos.length ? eventos : [{ id: "x", data: "21 Mai", cliente: "Itaú", palestrante: p.nome, local: "São Paulo, SP", valor: p.valor, status: "concluido" }]).map((e: any) => (
-                    <div key={e.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                      <div className="text-center w-12">
-                        <div className="text-[10px] text-muted-foreground">{e.data.split(" ")[1]}</div>
-                        <div className="font-bold">{e.data.split(" ")[0]}</div>
+          {!p ? (
+            <Card className="p-10 text-center text-muted-foreground">
+              Selecione um palestrante ou cadastre um novo.
+            </Card>
+          ) : (
+            <>
+              <Card className="p-6">
+                <div className="flex items-start justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    {p.foto_url ? (
+                      <img src={p.foto_url} alt="" className="h-20 w-20 rounded-xl ring-2 ring-border object-cover" />
+                    ) : (
+                      <div className="h-20 w-20 rounded-xl ring-2 ring-border bg-muted grid place-items-center text-2xl font-bold">
+                        {p.nome[0]}
                       </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{e.cliente}</div>
-                        <div className="text-xs text-muted-foreground">{e.local}</div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-xl font-bold">{p.nome}</h2>
+                        {p.exclusivo && <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"><Crown className="h-3 w-3 mr-1" /> Exclusivo</Badge>}
+                        <Badge variant="outline">{p.tipo_pessoa ?? "—"}</Badge>
+                        <Badge variant="outline">{p.status ?? "—"}</Badge>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold">{formatBRL(e.valor)}</div>
-                        <Badge variant="outline" className="text-[10px]">{e.status}</Badge>
+                      <div className="text-sm text-muted-foreground">{p.mini_bio ?? p.bio?.slice(0, 120)}</div>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {(p.temas ?? []).map((t) => <Badge key={t} variant="secondary">{t}</Badge>)}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {Number(p.avaliacao_media ?? 0).toFixed(1)}</span>
+                        <span>{p.total_eventos ?? 0} eventos</span>
+                        <span>Cachê padrão: <span className="font-semibold text-foreground">{formatBRL(p.cache_padrao ?? 0)}</span></span>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="h-4 w-4 mr-1" /> Editar</Button>
+                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirmDelete(true)}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                    </Button>
+                  </div>
                 </div>
+                {vendasAtivas.length > 0 && (
+                  <div className="mt-4 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded p-2">
+                    Este palestrante possui {vendasAtivas.length} venda(s) ativa(s). A exclusão será bloqueada.
+                  </div>
+                )}
               </Card>
-            </TabsContent>
 
-            <TabsContent value="docs">
-              <div className="grid md:grid-cols-2 gap-5">
-                <Card className="p-5">
-                  <h4 className="font-semibold mb-3">Contratos vinculados</h4>
-                  {ctos.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between border-b py-2 last:border-0">
-                      <div>
-                        <div className="text-sm font-mono">{c.numero}</div>
-                        <div className="text-xs text-muted-foreground">{c.cliente} · {c.modelo}</div>
+              <Tabs defaultValue="fiscal">
+                <TabsList className="flex-wrap">
+                  <TabsTrigger value="fiscal"><Landmark className="h-3.5 w-3.5 mr-1" /> Fiscal & Endereço</TabsTrigger>
+                  <TabsTrigger value="bancario"><Wallet className="h-3.5 w-3.5 mr-1" /> Bancário</TabsTrigger>
+                  <TabsTrigger value="comercial"><Briefcase className="h-3.5 w-3.5 mr-1" /> Comercial</TabsTrigger>
+                  <TabsTrigger value="agenda"><Calendar className="h-3.5 w-3.5 mr-1" /> Agenda / Vendas</TabsTrigger>
+                  <TabsTrigger value="docs"><FileText className="h-3.5 w-3.5 mr-1" /> Financeiro</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="fiscal">
+                  <Card className="p-5 grid md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <Field label="Tipo">{p.tipo_pessoa ?? "—"}</Field>
+                    <Field label={p.tipo_pessoa === "PJ" ? "CNPJ" : "CPF"}>{p.tipo_pessoa === "PJ" ? p.cnpj ?? "—" : p.cpf ?? "—"}</Field>
+                    <Field label="Razão social">{p.razao_social ?? "—"}</Field>
+                    <Field label="Nome fantasia">{p.nome_fantasia ?? "—"}</Field>
+                    <Field label="Inscrição municipal">{p.insc_municipal ?? "—"}</Field>
+                    <Field label="Regime tributário"><Badge variant="outline">{p.regime ?? "—"}</Badge></Field>
+                    <div className="md:col-span-2 mt-3 pt-3 border-t">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-2"><MapPin className="h-3 w-3" /> Endereço</div>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <Field label="CEP">{p.cep ?? "—"}</Field>
+                        <Field label="Logradouro">{p.logradouro ?? "—"}</Field>
+                        <Field label="Número">{p.numero ?? "—"}</Field>
+                        <Field label="Bairro">{p.bairro ?? "—"}</Field>
+                        <Field label="Cidade">{p.cidade ?? "—"}</Field>
+                        <Field label="Estado">{p.estado ?? "—"}</Field>
                       </div>
-                      <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
                     </div>
-                  ))}
-                </Card>
-                <Card className="p-5">
-                  <h4 className="font-semibold mb-3">Financeiro / cachês a pagar</h4>
-                  {(pag.length ? pag : [{ id: "x", fornecedor: p.nome, descricao: "Cachê padrão", valor: d?.operacional.cachePadrao ?? p.valor, vencimento: "—", status: "em aberto" }]).map((c: any) => (
-                    <div key={c.id} className="flex items-center justify-between border-b py-2 last:border-0">
-                      <div>
-                        <div className="text-sm">{c.descricao}</div>
-                        <div className="text-xs text-muted-foreground">vence {c.vencimento}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold">{formatBRL(c.valor)}</div>
-                        <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
-                      </div>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="bancario">
+                  <Card className="p-5 grid md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <Field label="Banco">{p.banco ?? "—"}</Field>
+                    <Field label="Agência">{p.agencia ?? "—"}</Field>
+                    <Field label="Conta">{p.conta ?? "—"}</Field>
+                    <Field label="Tipo de conta">{p.tipo_conta ?? "—"}</Field>
+                    <Field label="Chave PIX"><span className="font-mono">{p.pix ?? "—"}</span></Field>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="comercial">
+                  <Card className="p-5 grid md:grid-cols-3 gap-x-8 gap-y-4 text-sm">
+                    <Field label="Exclusivo Polo">{p.exclusivo ? <Badge className="bg-amber-500">Sim</Badge> : <Badge variant="outline">Não</Badge>}</Field>
+                    <Field label="Cachê mínimo">{formatBRL(p.cache_min ?? 0)}</Field>
+                    <Field label="Cachê máximo">{formatBRL(p.cache_max ?? 0)}</Field>
+                    <Field label="Publicar no site">{p.publicar_site ? "Sim" : "Não"}</Field>
+                    <Field label="E-mail">{p.email}</Field>
+                    <Field label="Telefone">{p.telefone ?? "—"}</Field>
+                    <div className="md:col-span-3">
+                      <div className="text-xs text-muted-foreground mb-1">Bio</div>
+                      <p className="text-sm whitespace-pre-wrap">{p.bio ?? "—"}</p>
                     </div>
-                  ))}
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+                    <div className="md:col-span-3">
+                      <div className="text-xs text-muted-foreground mb-2">Temas</div>
+                      <div className="flex flex-wrap gap-1.5">{(p.temas ?? []).map(t => <Badge key={t}>{t}</Badge>)}</div>
+                    </div>
+                    <div className="md:col-span-3">
+                      <div className="text-xs text-muted-foreground mb-2">Formatos</div>
+                      <div className="flex flex-wrap gap-1.5">{(p.formatos ?? []).map(t => <Badge key={t} variant="outline">{t}</Badge>)}</div>
+                    </div>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="agenda">
+                  <Card className="p-5">
+                    <h4 className="font-semibold mb-3">Vendas / eventos vinculados ({vinculos?.vendas.length ?? 0})</h4>
+                    {(vinculos?.vendas ?? []).length === 0 ? (
+                      <div className="text-sm text-muted-foreground">Nenhuma venda para este palestrante.</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {vinculos!.vendas.map((v: any) => (
+                          <div key={v.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                            <div className="text-center w-16">
+                              <div className="text-[10px] text-muted-foreground">{v.data_evento?.slice(5, 7) ?? "—"}</div>
+                              <div className="font-bold">{v.data_evento?.slice(8, 10) ?? "?"}</div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{v.titulo}</div>
+                              <div className="text-xs text-muted-foreground truncate">{v.cliente?.razao_social ?? "—"} · {v.cidade ?? "—"}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-semibold">{formatBRL(v.cache_palestr)}</div>
+                              <Badge variant="outline" className="text-[10px]">{v.status}</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="docs">
+                  <Card className="p-5">
+                    <h4 className="font-semibold mb-3">Cachês a pagar ({vinculos?.contasPagar.length ?? 0})</h4>
+                    {(vinculos?.contasPagar ?? []).length === 0 ? (
+                      <div className="text-sm text-muted-foreground">Nenhum lançamento financeiro.</div>
+                    ) : vinculos!.contasPagar.map((c: any) => (
+                      <div key={c.id} className="flex items-center justify-between border-b py-2 last:border-0">
+                        <div>
+                          <div className="text-sm">{c.descricao ?? "Cachê"}</div>
+                          <div className="text-xs text-muted-foreground">vence {c.vencimento ?? "—"}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">{formatBRL(c.valor)}</div>
+                          <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Form dialog */}
+      <Dialog open={openForm} onOpenChange={(v) => { setOpenForm(v); if (!v) setEditing(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing?.id ? "Editar palestrante" : "Novo palestrante"}</DialogTitle>
+          </DialogHeader>
+          {editing && <PalestranteForm form={editing} setForm={setEditing} />}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpenForm(false)}>Cancelar</Button>
+            <Button onClick={() => save.mutate(editing!)} disabled={save.isPending}>
+              {save.isPending ? "Salvando…" : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir palestrante?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Se houver vendas/propostas/contratos vinculados, a exclusão será bloqueada pelo banco.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => p && del.mutate(p.id)} className="bg-destructive">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -232,6 +404,133 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <div className="text-[11px] uppercase text-muted-foreground font-semibold tracking-wider mb-1">{label}</div>
       <div className="font-medium">{children}</div>
+    </div>
+  );
+}
+
+function PalestranteForm({
+  form, setForm,
+}: { form: Partial<Palestrante>; setForm: (f: Partial<Palestrante>) => void }) {
+  const set = (k: keyof Palestrante, v: any) => setForm({ ...form, [k]: v });
+  const csv = (arr?: string[] | null) => (arr ?? []).join(", ");
+  const parseCsv = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
+
+  return (
+    <Tabs defaultValue="basic" className="mt-2">
+      <TabsList className="flex-wrap">
+        <TabsTrigger value="basic">Básico</TabsTrigger>
+        <TabsTrigger value="fiscal">Fiscal</TabsTrigger>
+        <TabsTrigger value="endereco">Endereço</TabsTrigger>
+        <TabsTrigger value="bancario">Bancário</TabsTrigger>
+        <TabsTrigger value="comercial">Comercial</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="basic" className="grid md:grid-cols-2 gap-3">
+        <F label="Nome *"><Input value={form.nome ?? ""} onChange={(e) => set("nome", e.target.value)} /></F>
+        <F label="Nome artístico"><Input value={form.nome_artistico ?? ""} onChange={(e) => set("nome_artistico", e.target.value)} /></F>
+        <F label="E-mail *"><Input type="email" value={form.email ?? ""} onChange={(e) => set("email", e.target.value)} /></F>
+        <F label="Telefone"><Input value={form.telefone ?? ""} onChange={(e) => set("telefone", e.target.value)} /></F>
+        <F label="Foto URL"><Input value={form.foto_url ?? ""} onChange={(e) => set("foto_url", e.target.value)} /></F>
+        <F label="Vídeo URL"><Input value={form.video_url ?? ""} onChange={(e) => set("video_url", e.target.value)} /></F>
+        <div className="md:col-span-2">
+          <F label="Mini bio"><Textarea rows={2} value={form.mini_bio ?? ""} onChange={(e) => set("mini_bio", e.target.value)} /></F>
+        </div>
+        <div className="md:col-span-2">
+          <F label="Bio completa"><Textarea rows={4} value={form.bio ?? ""} onChange={(e) => set("bio", e.target.value)} /></F>
+        </div>
+        <F label="Status">
+          <Select value={form.status ?? "ativo"} onValueChange={(v) => set("status", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ativo">Ativo</SelectItem>
+              <SelectItem value="inativo">Inativo</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="validacao">Em validação</SelectItem>
+            </SelectContent>
+          </Select>
+        </F>
+        <F label="Publicar no site">
+          <div className="flex items-center gap-2 pt-2"><Switch checked={!!form.publicar_site} onCheckedChange={(v) => set("publicar_site", v)} /><span className="text-sm text-muted-foreground">{form.publicar_site ? "Sim" : "Não"}</span></div>
+        </F>
+      </TabsContent>
+
+      <TabsContent value="fiscal" className="grid md:grid-cols-2 gap-3">
+        <F label="Tipo pessoa">
+          <Select value={form.tipo_pessoa ?? "PJ"} onValueChange={(v) => set("tipo_pessoa", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PF">Pessoa Física</SelectItem>
+              <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+            </SelectContent>
+          </Select>
+        </F>
+        <F label="Regime tributário">
+          <Select value={form.regime ?? "simples"} onValueChange={(v) => set("regime", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mei">MEI</SelectItem>
+              <SelectItem value="simples">Simples Nacional</SelectItem>
+              <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
+              <SelectItem value="lucro_real">Lucro Real</SelectItem>
+              <SelectItem value="pf">PF</SelectItem>
+            </SelectContent>
+          </Select>
+        </F>
+        <F label="CPF"><Input value={form.cpf ?? ""} onChange={(e) => set("cpf", e.target.value)} /></F>
+        <F label="CNPJ"><Input value={form.cnpj ?? ""} onChange={(e) => set("cnpj", e.target.value)} /></F>
+        <F label="Razão social"><Input value={form.razao_social ?? ""} onChange={(e) => set("razao_social", e.target.value)} /></F>
+        <F label="Nome fantasia"><Input value={form.nome_fantasia ?? ""} onChange={(e) => set("nome_fantasia", e.target.value)} /></F>
+        <F label="Inscrição municipal"><Input value={form.insc_municipal ?? ""} onChange={(e) => set("insc_municipal", e.target.value)} /></F>
+      </TabsContent>
+
+      <TabsContent value="endereco" className="grid md:grid-cols-3 gap-3">
+        <F label="CEP"><Input value={form.cep ?? ""} onChange={(e) => set("cep", e.target.value)} /></F>
+        <div className="md:col-span-2"><F label="Logradouro"><Input value={form.logradouro ?? ""} onChange={(e) => set("logradouro", e.target.value)} /></F></div>
+        <F label="Número"><Input value={form.numero ?? ""} onChange={(e) => set("numero", e.target.value)} /></F>
+        <F label="Bairro"><Input value={form.bairro ?? ""} onChange={(e) => set("bairro", e.target.value)} /></F>
+        <F label="Cidade"><Input value={form.cidade ?? ""} onChange={(e) => set("cidade", e.target.value)} /></F>
+        <F label="Estado"><Input value={form.estado ?? ""} onChange={(e) => set("estado", e.target.value)} /></F>
+      </TabsContent>
+
+      <TabsContent value="bancario" className="grid md:grid-cols-2 gap-3">
+        <F label="Banco"><Input value={form.banco ?? ""} onChange={(e) => set("banco", e.target.value)} /></F>
+        <F label="Agência"><Input value={form.agencia ?? ""} onChange={(e) => set("agencia", e.target.value)} /></F>
+        <F label="Conta"><Input value={form.conta ?? ""} onChange={(e) => set("conta", e.target.value)} /></F>
+        <F label="Tipo de conta">
+          <Select value={form.tipo_conta ?? ""} onValueChange={(v) => set("tipo_conta", v)}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="corrente">Corrente</SelectItem>
+              <SelectItem value="poupança">Poupança</SelectItem>
+            </SelectContent>
+          </Select>
+        </F>
+        <div className="md:col-span-2"><F label="Chave PIX"><Input value={form.pix ?? ""} onChange={(e) => set("pix", e.target.value)} /></F></div>
+      </TabsContent>
+
+      <TabsContent value="comercial" className="grid md:grid-cols-3 gap-3">
+        <F label="Cachê mínimo"><Input type="number" value={form.cache_min ?? ""} onChange={(e) => set("cache_min", e.target.value)} /></F>
+        <F label="Cachê padrão"><Input type="number" value={form.cache_padrao ?? ""} onChange={(e) => set("cache_padrao", e.target.value)} /></F>
+        <F label="Cachê máximo"><Input type="number" value={form.cache_max ?? ""} onChange={(e) => set("cache_max", e.target.value)} /></F>
+        <F label="Exclusivo Polo">
+          <div className="flex items-center gap-2 pt-2"><Switch checked={!!form.exclusivo} onCheckedChange={(v) => set("exclusivo", v)} /><span className="text-sm text-muted-foreground">{form.exclusivo ? "Sim" : "Não"}</span></div>
+        </F>
+        <div className="md:col-span-3">
+          <F label="Temas (separados por vírgula)"><Input value={csv(form.temas)} onChange={(e) => set("temas", parseCsv(e.target.value))} /></F>
+        </div>
+        <div className="md:col-span-3">
+          <F label="Formatos (separados por vírgula: presencial, online, hibrido)"><Input value={csv(form.formatos)} onChange={(e) => set("formatos", parseCsv(e.target.value))} /></F>
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function F({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <div className="mt-1">{children}</div>
     </div>
   );
 }
