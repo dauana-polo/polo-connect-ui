@@ -254,6 +254,7 @@ export type Database = {
           contato_nome: string | null
           contato_tel: string | null
           created_at: string | null
+          empresa_id: string | null
           estado: string | null
           id: string
           logradouro: string | null
@@ -277,6 +278,7 @@ export type Database = {
           contato_nome?: string | null
           contato_tel?: string | null
           created_at?: string | null
+          empresa_id?: string | null
           estado?: string | null
           id?: string
           logradouro?: string | null
@@ -300,6 +302,7 @@ export type Database = {
           contato_nome?: string | null
           contato_tel?: string | null
           created_at?: string | null
+          empresa_id?: string | null
           estado?: string | null
           id?: string
           logradouro?: string | null
@@ -312,7 +315,15 @@ export type Database = {
           ultimo_evento?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_polo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comissoes: {
         Row: {
@@ -1080,6 +1091,7 @@ export type Database = {
           data_pretendida: string | null
           descricao: string | null
           empresa: string
+          empresa_id: string | null
           etapa: string | null
           etapa_alterada_em: string | null
           formato: string | null
@@ -1107,6 +1119,7 @@ export type Database = {
           data_pretendida?: string | null
           descricao?: string | null
           empresa: string
+          empresa_id?: string | null
           etapa?: string | null
           etapa_alterada_em?: string | null
           formato?: string | null
@@ -1134,6 +1147,7 @@ export type Database = {
           data_pretendida?: string | null
           descricao?: string | null
           empresa?: string
+          empresa_id?: string | null
           etapa?: string | null
           etapa_alterada_em?: string | null
           formato?: string | null
@@ -1162,6 +1176,13 @@ export type Database = {
             columns: ["consultor_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_polo"
             referencedColumns: ["id"]
           },
         ]
@@ -1390,6 +1411,7 @@ export type Database = {
           cpf: string | null
           created_at: string | null
           email: string
+          empresa_id: string | null
           estado: string | null
           exclusivo: boolean | null
           formatos: string[] | null
@@ -1432,6 +1454,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string | null
           email: string
+          empresa_id?: string | null
           estado?: string | null
           exclusivo?: boolean | null
           formatos?: string[] | null
@@ -1474,6 +1497,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string | null
           email?: string
+          empresa_id?: string | null
           estado?: string | null
           exclusivo?: boolean | null
           formatos?: string[] | null
@@ -1500,7 +1524,15 @@ export type Database = {
           user_id?: string | null
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "palestrantes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_polo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       processos: {
         Row: {
@@ -1917,6 +1949,7 @@ export type Database = {
           consultor_id: string | null
           created_at: string | null
           data_evento: string | null
+          empresa_id: string | null
           empresa_polo_id: string | null
           estado: string | null
           formato: string | null
@@ -1948,6 +1981,7 @@ export type Database = {
           consultor_id?: string | null
           created_at?: string | null
           data_evento?: string | null
+          empresa_id?: string | null
           empresa_polo_id?: string | null
           estado?: string | null
           formato?: string | null
@@ -1979,6 +2013,7 @@ export type Database = {
           consultor_id?: string | null
           created_at?: string | null
           data_evento?: string | null
+          empresa_id?: string | null
           empresa_polo_id?: string | null
           estado?: string | null
           formato?: string | null
@@ -2015,6 +2050,13 @@ export type Database = {
             columns: ["consultor_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_polo"
             referencedColumns: ["id"]
           },
           {

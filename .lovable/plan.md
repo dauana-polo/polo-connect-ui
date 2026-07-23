@@ -1,79 +1,79 @@
-# Fase 1 — Fundação (Auth, Usuários, Empresas, Permissões, Notificações, Auditoria)
+# Sprint 01 — Consolidação da Base
 
-## Contexto
+Escopo: **auditoria + refatoração interna sem alterar UX, layout ou fluxo funcional**. Nenhuma nova feature.
 
-O projeto já tem Lovable Cloud (Supabase) conectado, com 22 tabelas do ERP (leads, vendas, kanban, etc.), a tabela `usuarios` com campo `perfil` (enum textual), função `meu_perfil()`, trigger `handle_new_user()` que cria linha em `usuarios` no signup, e RLS ativo. **Não existe tela de login** — o app assume usuário autenticado.
+## 1. Levantamento (leitura, sem mudanças)
 
-Esta fase entrega a camada de identidade e administração que faltava, sem quebrar o CRM/Kanban já funcionais.
+- Mapear todas as 19 rotas `app.*.tsx` e catalogar padrões duplicados.
+- Rodar `supabase--linter` para pegar RLS/policy/índice ausentes.
+- Rodar `security--run_security_scan`.
+- Verificar `routeTree`, guards de rota (`_authenticated`), middleware de auth em `start.ts`.
+- Listar todas as queries diretas ao Supabase espalhadas nas rotas.
 
-## Entregas
+## 2. Refatorações estruturais (sem impacto visual)
 
-### 1. Autenticação real (Supabase Auth)
-- Rota pública `/auth` com abas **Entrar / Cadastrar / Esqueci minha senha** (design dark premium + vermelho).
-- Rota `/auth/reset-password` para definir nova senha após clique no e-mail.
-- `emailRedirectTo` e `redirectTo` apontando para o origin correto.
-- **Auto-confirm de e-mail ativado** (para acelerar testes; documentar como desativar em produção).
-- Gate de rotas: mover `/app/*` para `src/routes/_authenticated/app.*` sob layout gerenciado `_authenticated/route.tsx` (ssr:false, redireciona para `/auth`).
-- `attachSupabaseAuth` já registrado no `start.ts` (verificar).
-- Header do `/app` mostra usuário logado + botão **Sair** (com teardown de cache).
-- Listener `onAuthStateChange` no `__root.tsx` invalidando router/queries.
+### 2.1 Camada de dados centralizada
+Criar `src/lib/api/` com módulos por domínio:
+- `leads.ts`, `vendas.ts`, `palestrantes.ts`, `clientes.ts`, `financeiro.ts`, `agenda.ts`, `tarefas.ts`, `kanban.ts`, `comissoes.ts`, `notificacoes.ts`.
+- Cada módulo expõe funções tipadas (`listLeads`, `updateLead`, etc.) usando o cliente Supabase existente.
+- Substituir `supabase.from(...)` inline nas rotas por chamadas a essas funções.
 
-### 2. Sistema de roles/permissões (RLS seguro)
-Migrar do campo textual `usuarios.perfil` (vulnerável a escalada) para o padrão canônico:
-- Enum `app_role` (admin, gestor, comercial, pos_venda, juridico, financeiro, logistica, palestrante).
-- Tabela `user_roles (user_id, role)` com RLS, GRANTs.
-- Função `has_role(_user_id, _role)` SECURITY DEFINER.
-- Função `is_admin_or_gestor()` para reutilizar.
-- Manter `meu_perfil()` funcionando (retorna o role primário) para não quebrar policies existentes.
-- Trigger `handle_new_user`: primeiro usuário do sistema recebe `admin`; demais recebem `comercial` por padrão.
-- Backfill: migrar valores existentes de `usuarios.perfil` para `user_roles`.
+### 2.2 Hooks reutilizáveis
+`src/hooks/`:
+- `useSupabaseQuery.ts` — wrapper padronizado (loading/error/refetch + toast).
+- `useRealtimeTable.ts` — assinatura Realtime reutilizável (hoje repetida em CRM, Kanban, Notificações).
+- `useRole.ts` — leitura de `user_roles` centralizada (hoje consultada em ≥3 rotas).
+- `useEmpresaAtiva.ts` — preparar contexto multiempresa (leitura simples, sem quebrar nada).
 
-### 3. Módulo Usuários (`/app/admin` — aba Usuários)
-- Listagem de usuários com nome, e-mail, roles (badges), status ativo.
-- Criar novo usuário (via convite — server function usando `supabaseAdmin.auth.admin.inviteUserByEmail`).
-- Editar nome, ativar/desativar, gerenciar roles (multi-select).
-- Server functions protegidas com `requireSupabaseAuth` + verificação de role admin.
-- Acesso restrito a admin/gestor.
+### 2.3 Componentes compartilhados
+Extrair para `src/components/shared/`:
+- `PageHeader.tsx` (título + ações — padrão repetido em quase toda rota).
+- `KpiCard.tsx` (usado em Dashboard, Financeiro, Comissões, Pré-Balanço, Eventos).
+- `EmptyState.tsx`, `LoadingState.tsx`.
+- `DataTable.tsx` fino sobre shadcn `Table` com paginação/ordenação.
+- `MoneyInput.tsx` e helpers `formatCurrency`, `formatDate`, `formatCNPJ` em `src/lib/format.ts`.
+- `ConfirmDialog.tsx` para confirmações destrutivas (hoje reimplementado várias vezes).
 
-### 4. Empresas / Contas
-Nota: já existe `empresas_polo` (nossos CNPJs internos) e `clientes` (contas dos clientes). Interpretar "Empresas" como **fortalecer o CRUD de `empresas_polo`** (dados fiscais internos usados no cálculo de impostos), já que multi-tenant real exigiria refactor de todas as 22 tabelas — fora de escopo da Fase 1.
-- Nova aba em `/app/admin` — **Empresas** — CRUD completo de `empresas_polo` (razão social, CNPJ, regime tributário, alíquotas).
-- Se o usuário quiser multi-tenant de verdade (cada workspace = agência isolada), levantar como escopo separado no fim.
+### 2.4 Contextos
+- Consolidar `useAuth` já existente; adicionar `RoleContext` derivado (evita refetch de perfil por página).
 
-### 5. Notificações in-app
-- Tabela `notificacoes (user_id, titulo, mensagem, tipo, link, lida, created_at)` + RLS por dono.
-- Componente **sino** no topo do `/app` com contador e dropdown das últimas 10.
-- Realtime via `supabase.channel` para push instantâneo.
-- Helper `criarNotificacao()` (server fn) para outros módulos dispararem.
-- Triggers de exemplo: novo lead atribuído ao consultor, venda criada, atividade CRM vencendo.
+### 2.5 Tipagens
+- Reexportar tipos gerados de `integrations/supabase/types.ts` em `src/lib/types.ts` com aliases de domínio (`Lead`, `Venda`, `Palestrante`…) para não vazar `Database['public']['Tables']…` pelo código.
 
-### 6. Logs / Auditoria
-- Tabela `audit_logs (user_id, acao, entidade, entidade_id, dados_antes, dados_depois, ip, user_agent, created_at)` + RLS (só admin lê).
-- Trigger genérico `log_change()` aplicado nas tabelas críticas: `leads`, `vendas`, `contratos`, `user_roles`, `empresas_polo`.
-- Nova aba em `/app/admin` — **Auditoria** — com filtros por usuário, entidade, data.
+## 3. Banco de dados
 
-### 7. Configurações do sistema
-- Já existe `site_config`. Adicionar aba **Configurações** em `/app/admin` para editar chave/valor (nome da empresa, logo, cores, e-mail de contato).
-- Restrito a admin.
+Uma migration única de consolidação:
+- **Índices** nas FKs mais consultadas: `leads.consultor_id`, `leads.cliente_id`, `vendas.lead_id`, `vendas.palestrante_id`, `vendas.cliente_id`, `kanban_cards.venda_id`, `kanban_cards(setor,coluna)`, `crm_atividades.lead_id`, `crm_historico.lead_id`, `contas_pagar.vencimento`, `contas_receber.vencimento`, `agenda_eventos.data_inicio`, `tarefas.responsavel_id`, `notificacoes(user_id, lida)`, `comissoes.venda_id`.
+- **RLS**: rodar linter, corrigir policies faltantes, garantir `service_role` grant em todas as tabelas públicas, remover policies `USING (true)` de escrita se existirem.
+- **Integridade**: conferir `ON DELETE` das FKs de palestrantes/vendas (manter `RESTRICT` conforme decisão anterior).
+- **Multiempresa (preparação, não ativação)**: adicionar coluna `empresa_id uuid NULL` em tabelas de negócio (`leads`, `vendas`, `clientes`, `palestrantes`, `contas_*`) referenciando `empresas_polo`, sem tornar NOT NULL nem alterar policies ainda — só criar o campo e o índice, para migração futura sem breaking change.
 
-## Fora de escopo (fases seguintes)
-- Multi-tenancy real por workspace/organização.
-- Integrações externas (Stripe, WhatsApp, Google Calendar, etc.) — Fase 3/4.
-- BI, automações — Fase 4.
-- Dashboards com dados 100% reais — a maior parte já lê do Supabase; refinar na Fase 2.
+Se linter apontar problemas, resolver na mesma migration.
 
-## Detalhes técnicos
+## 4. Segurança
 
-- **Migrations**: uma única migration cobrindo `user_roles`, `has_role`, `notificacoes`, `audit_logs`, trigger de auditoria, GRANTs, RLS policies, backfill.
-- **Server functions**: `src/lib/admin/users.functions.ts`, `src/lib/admin/empresas.functions.ts`, `src/lib/notifications/notifications.functions.ts` — todas com `requireSupabaseAuth` + checagem `has_role(userId, 'admin')` quando privilegiadas; `supabaseAdmin` importado dinamicamente dentro dos handlers para operações que exijam service role (convite de usuário).
-- **RLS policies existentes**: mantidas. Novas policies usam `has_role()` em vez de comparar `usuarios.perfil` diretamente para evitar recursão.
-- **Design**: reutilizar tokens do design system (dark premium + accent vermelho); componentes shadcn já disponíveis.
-- **Auth config**: `supabase--configure_auth` com `auto_confirm_email: true`, `disable_signup: false`, `external_anonymous_users_enabled: false`, `password_hibp_enabled: true`.
-- **Providers sociais**: Google via `supabase--configure_social_auth` — pedir confirmação antes de habilitar (não incluído por padrão, só se você quiser).
+- Rodar `security--run_security_scan` e `supabase--linter` e corrigir o que aparecer.
+- Confirmar que nenhuma rota `/app/*` está fora de `_authenticated`.
+- Garantir que `handle_new_user` e demais funções `SECURITY DEFINER` têm `SET search_path = public` (já têm — validar).
+- Revisar policies para não exporem dados via `anon` em tabelas sensíveis.
 
-## Ao terminar, direi
+## 5. Performance
 
-- O que ficou funcional.
-- Warnings de segurança remanescentes (se houver).
-- O que precisa de ação manual sua (ex: primeiro usuário admin — criar conta no `/auth` e o sistema promove automaticamente).
-- Confirmação para seguir para a Fase 2.
+- Substituir `select('*')` por colunas específicas nas listagens grandes (Kanban, CRM, Financeiro).
+- Adicionar `limit()` e paginação onde faltar em Auditoria e Notificações.
+- Memoizar cálculos pesados em `app.comissoes.tsx`, `app.prebalanco.tsx`, `app.financeiro.tsx` (`useMemo` onde ainda não há).
+- Verificar re-subscribes Realtime (garantir cleanup no `useEffect`).
+
+## 6. Não faz parte desta sprint
+
+- Nenhuma nova tela, rota, feature ou mudança de layout.
+- Nenhuma ativação real de multiempresa (só schema preparatório).
+- Nenhuma alteração em integrações externas.
+
+## 7. Entregável final
+
+Relatório em chat cobrindo os 6 tópicos pedidos (Arquitetura, Banco, Código, Segurança, Performance, Próximos passos) com o que foi de fato alterado e o que ficou como recomendação.
+
+---
+
+**Confirma este plano?** Posso executar tudo em sequência (é uma sprint de refactor extensa — múltiplos arquivos novos em `lib/api`, `hooks`, `components/shared`, substituições em cada rota, e 1 migration consolidada).
