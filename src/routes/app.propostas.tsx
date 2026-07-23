@@ -128,7 +128,7 @@ function Propostas() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-5">
           <TabsList>
             <TabsTrigger value="lista">Lista</TabsTrigger>
-            <TabsTrigger value="nova">Nova Proposta</TabsTrigger>
+            {canEdit && <TabsTrigger value="nova">Nova Proposta</TabsTrigger>}
             <TabsTrigger value="preview">Preview PDF</TabsTrigger>
           </TabsList>
 
