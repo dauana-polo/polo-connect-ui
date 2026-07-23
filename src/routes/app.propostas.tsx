@@ -367,7 +367,7 @@ function Propostas() {
         description="Esta ação é permanente e removerá também os palestrantes vinculados a ela."
         destructive
         confirmLabel="Excluir"
-        onConfirm={() => confirmDeleteId && excluir.mutate(confirmDeleteId)}
+        onConfirm={() => { if (confirmDeleteId) excluir.mutate(confirmDeleteId); }}
       />
     </>
   );
