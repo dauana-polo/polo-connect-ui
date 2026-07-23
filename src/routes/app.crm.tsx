@@ -41,7 +41,10 @@ function CRM() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [expandedStage, setExpandedStage] = useState<string | null>(ETAPAS[0].id);
 
-  const { data: leads = [], isLoading } = useQuery({
+  const { can } = usePermissions();
+  const canEdit = can("crm", "edit");
+
+  const { data: leads = [], isLoading, error, refetch } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
       const { data, error } = await supabase
