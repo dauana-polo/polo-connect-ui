@@ -13,6 +13,10 @@ import { NewLeadDialog } from "@/components/crm/NewLeadDialog";
 import { MarcarGanhoDialog } from "@/components/crm/MarcarGanhoDialog";
 import { Calendar, Search, User, TrendingUp, Trophy, AlertCircle, DollarSign, Mic2, ChevronDown, ChevronUp, Trophy as TrophyIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Can } from "@/components/shared/Can";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const Route = createFileRoute("/app/crm")({ component: CRM });
 
