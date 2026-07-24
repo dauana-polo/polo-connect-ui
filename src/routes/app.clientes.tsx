@@ -31,6 +31,7 @@ function ClientesPage() {
   const canEdit = can("clientes", "edit");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [busca, setBusca] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
