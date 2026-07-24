@@ -31,6 +31,7 @@ function ClientesPage() {
   const canEdit = can("clientes", "edit");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [busca, setBusca] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -116,7 +117,7 @@ function ClientesPage() {
                 {list.map((x: any) => (
                   <button
                     key={x.id}
-                    onClick={() => { setSelectedId(x.id); setShowNew(false); }}
+                    onClick={() => { setSelectedId(x.id); setShowNew(false); setEditing(false); }}
                     className={`w-full text-left p-3 rounded-lg border transition ${current?.id === x.id && !showNew ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
                   >
                     <div className="flex items-center gap-3">
@@ -138,6 +139,12 @@ function ClientesPage() {
         <div className="col-span-12 lg:col-span-8 xl:col-span-9 space-y-4">
           {showNew && canEdit ? (
             <NovoClienteForm onClose={() => setShowNew(false)} onSaved={(id) => { setShowNew(false); setSelectedId(id); qc.invalidateQueries({ queryKey: ["clientes"] }); }} />
+          ) : editing && current && canEdit ? (
+            <NovoClienteForm
+              initial={current}
+              onClose={() => setEditing(false)}
+              onSaved={(id) => { setEditing(false); setSelectedId(id); qc.invalidateQueries({ queryKey: ["clientes"] }); }}
+            />
           ) : current ? (
             <>
               <Card className="p-6">
@@ -159,17 +166,23 @@ function ClientesPage() {
                     </div>
                   </div>
                   <Can resource="clientes" action="edit">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => setConfirmDelete(current.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Excluir
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => setConfirmDelete(current.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                      </Button>
+                    </div>
                   </Can>
                 </div>
               </Card>
+
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card className="p-4"><div className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Total gasto</div><div className="text-xl font-bold mt-1">{BRL(current.total_gasto)}</div></Card>
@@ -311,16 +324,26 @@ const clienteSchema = z.object({
 });
 type ClienteForm = z.infer<typeof clienteSchema>;
 
-function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
+function NovoClienteForm({ initial, onClose, onSaved }: { initial?: any; onClose: () => void; onSaved: (id: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const isEdit = !!initial?.id;
 
   const form = useForm<ClienteForm>({
     resolver: zodResolver(clienteSchema),
     defaultValues: {
-      cnpj: "", razao_social: "", nome_fantasia: "", segmento: "",
-      cep: "", logradouro: "", bairro: "", cidade: "", estado: "",
-      contato_nome: "", contato_email: "", contato_tel: "",
+      cnpj: initial?.cnpj ?? "",
+      razao_social: initial?.razao_social ?? "",
+      nome_fantasia: initial?.nome_fantasia ?? "",
+      segmento: initial?.segmento ?? "",
+      cep: initial?.cep ?? "",
+      logradouro: initial?.logradouro ?? "",
+      bairro: initial?.bairro ?? "",
+      cidade: initial?.cidade ?? "",
+      estado: initial?.estado ?? "",
+      contato_nome: initial?.contato_nome ?? "",
+      contato_email: initial?.contato_email ?? "",
+      contato_tel: initial?.contato_tel ?? "",
     },
   });
 
@@ -340,13 +363,19 @@ function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (
         contato_email: values.contato_email || null,
         contato_tel: values.contato_tel || null,
       };
+      if (isEdit) {
+        const { error } = await supabase.from("clientes").update(payload).eq("id", initial.id);
+        if (error) throw error;
+        return initial.id as string;
+      }
       const { data, error } = await supabase.from("clientes").insert(payload).select("id").single();
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: (id) => { toast.success("Cliente criado"); onSaved(id); },
+    onSuccess: (id) => { toast.success(isEdit ? "Cliente atualizado" : "Cliente criado"); onSaved(id); },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
   });
+
 
   async function consultar() {
     const clean = (form.getValues("cnpj") ?? "").replace(/\D/g, "");
@@ -374,7 +403,7 @@ function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (
   return (
     <Card className="p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <div><h3 className="font-semibold text-lg">Novo cliente</h3><p className="text-xs text-muted-foreground">Consulta automática via BrasilAPI</p></div>
+        <div><h3 className="font-semibold text-lg">{isEdit ? "Editar cliente" : "Novo cliente"}</h3><p className="text-xs text-muted-foreground">Consulta automática via BrasilAPI</p></div>
         <Button variant="ghost" onClick={onClose}>Cancelar</Button>
       </div>
 
