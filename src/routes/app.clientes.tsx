@@ -403,7 +403,7 @@ function NovoClienteForm({ initial, onClose, onSaved }: { initial?: any; onClose
   return (
     <Card className="p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <div><h3 className="font-semibold text-lg">Novo cliente</h3><p className="text-xs text-muted-foreground">Consulta automática via BrasilAPI</p></div>
+        <div><h3 className="font-semibold text-lg">{isEdit ? "Editar cliente" : "Novo cliente"}</h3><p className="text-xs text-muted-foreground">Consulta automática via BrasilAPI</p></div>
         <Button variant="ghost" onClick={onClose}>Cancelar</Button>
       </div>
 
