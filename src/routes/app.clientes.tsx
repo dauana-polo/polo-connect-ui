@@ -117,7 +117,7 @@ function ClientesPage() {
                 {list.map((x: any) => (
                   <button
                     key={x.id}
-                    onClick={() => { setSelectedId(x.id); setShowNew(false); }}
+                    onClick={() => { setSelectedId(x.id); setShowNew(false); setEditing(false); }}
                     className={`w-full text-left p-3 rounded-lg border transition ${current?.id === x.id && !showNew ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
                   >
                     <div className="flex items-center gap-3">
