@@ -123,7 +123,8 @@ export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }:
       });
   }, [open]);
 
-  const onSubmit = async (values: VendaForm) => {
+  const onSubmit = async (raw: VendaForm) => {
+    const values = raw as VendaValues;
     if (!meta) return;
     setSaving(true);
 
