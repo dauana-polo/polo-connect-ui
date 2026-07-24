@@ -52,7 +52,8 @@ const vendaSchema = z.object({
   status: z.string().trim().optional(),
   empresa_polo_id: z.string().trim().optional(),
 });
-type VendaForm = z.infer<typeof vendaSchema>;
+type VendaForm = z.input<typeof vendaSchema>;
+type VendaValues = z.output<typeof vendaSchema>;
 
 export function VendaDrawer({ vendaId, open, onOpenChange, extraSlot, onSaved }: Props) {
   const navigate = useNavigate();
