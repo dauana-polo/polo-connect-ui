@@ -139,6 +139,12 @@ function ClientesPage() {
         <div className="col-span-12 lg:col-span-8 xl:col-span-9 space-y-4">
           {showNew && canEdit ? (
             <NovoClienteForm onClose={() => setShowNew(false)} onSaved={(id) => { setShowNew(false); setSelectedId(id); qc.invalidateQueries({ queryKey: ["clientes"] }); }} />
+          ) : editing && current && canEdit ? (
+            <NovoClienteForm
+              initial={current}
+              onClose={() => setEditing(false)}
+              onSaved={(id) => { setEditing(false); setSelectedId(id); qc.invalidateQueries({ queryKey: ["clientes"] }); }}
+            />
           ) : current ? (
             <>
               <Card className="p-6">
@@ -160,17 +166,23 @@ function ClientesPage() {
                     </div>
                   </div>
                   <Can resource="clientes" action="edit">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => setConfirmDelete(current.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Excluir
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => setConfirmDelete(current.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                      </Button>
+                    </div>
                   </Can>
                 </div>
               </Card>
+
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card className="p-4"><div className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Total gasto</div><div className="text-xl font-bold mt-1">{BRL(current.total_gasto)}</div></Card>
