@@ -324,16 +324,26 @@ const clienteSchema = z.object({
 });
 type ClienteForm = z.infer<typeof clienteSchema>;
 
-function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
+function NovoClienteForm({ initial, onClose, onSaved }: { initial?: any; onClose: () => void; onSaved: (id: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const isEdit = !!initial?.id;
 
   const form = useForm<ClienteForm>({
     resolver: zodResolver(clienteSchema),
     defaultValues: {
-      cnpj: "", razao_social: "", nome_fantasia: "", segmento: "",
-      cep: "", logradouro: "", bairro: "", cidade: "", estado: "",
-      contato_nome: "", contato_email: "", contato_tel: "",
+      cnpj: initial?.cnpj ?? "",
+      razao_social: initial?.razao_social ?? "",
+      nome_fantasia: initial?.nome_fantasia ?? "",
+      segmento: initial?.segmento ?? "",
+      cep: initial?.cep ?? "",
+      logradouro: initial?.logradouro ?? "",
+      bairro: initial?.bairro ?? "",
+      cidade: initial?.cidade ?? "",
+      estado: initial?.estado ?? "",
+      contato_nome: initial?.contato_nome ?? "",
+      contato_email: initial?.contato_email ?? "",
+      contato_tel: initial?.contato_tel ?? "",
     },
   });
 
@@ -353,13 +363,19 @@ function NovoClienteForm({ onClose, onSaved }: { onClose: () => void; onSaved: (
         contato_email: values.contato_email || null,
         contato_tel: values.contato_tel || null,
       };
+      if (isEdit) {
+        const { error } = await supabase.from("clientes").update(payload).eq("id", initial.id);
+        if (error) throw error;
+        return initial.id as string;
+      }
       const { data, error } = await supabase.from("clientes").insert(payload).select("id").single();
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: (id) => { toast.success("Cliente criado"); onSaved(id); },
+    onSuccess: (id) => { toast.success(isEdit ? "Cliente atualizado" : "Cliente criado"); onSaved(id); },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
   });
+
 
   async function consultar() {
     const clean = (form.getValues("cnpj") ?? "").replace(/\D/g, "");
