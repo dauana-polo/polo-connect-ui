@@ -242,10 +242,12 @@ function PalestrantesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="h-4 w-4 mr-1" /> Editar</Button>
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirmDelete(true)}>
-                      <Trash2 className="h-4 w-4 mr-1" /> Excluir
-                    </Button>
+                    <Can resource="palestrantes" action="edit">
+                      <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="h-4 w-4 mr-1" /> Editar</Button>
+                      <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirmDelete(true)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                      </Button>
+                    </Can>
                   </div>
                 </div>
                 {vendasAtivas.length > 0 && (
