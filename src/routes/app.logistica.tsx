@@ -56,7 +56,7 @@ function LogisticaPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<LogisticaRow | null>(null);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const logisticaQuery = useQuery({
     queryKey: ["logistica-lista"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -67,6 +67,10 @@ function LogisticaPage() {
       return (data ?? []) as unknown as LogisticaRow[];
     },
   });
+  const rows = logisticaQuery.data ?? [];
+  const isLoading = logisticaQuery.isLoading;
+  const { can } = usePermissions();
+  const canEdit = can("logistica", "edit");
 
   const selected = rows.find((r) => r.id === selectedId) ?? rows[0] ?? null;
 
