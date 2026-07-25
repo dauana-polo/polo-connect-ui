@@ -69,8 +69,7 @@ function LogisticaPage() {
   });
   const rows = logisticaQuery.data ?? [];
   const isLoading = logisticaQuery.isLoading;
-  const { can } = usePermissions();
-  const canEdit = can("logistica", "edit");
+  usePermissions();
 
   const selected = rows.find((r) => r.id === selectedId) ?? rows[0] ?? null;
 
