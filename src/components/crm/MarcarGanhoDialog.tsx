@@ -76,7 +76,7 @@ export function MarcarGanhoDialog({
         cliente_id: lead.cliente_id,
         palestrante_id: pp.palestrante_id,
         consultor_id: lead.consultor_id,
-        titulo: `${proposta.titulo} �� ${pp.palestrante?.nome ?? ""}`.trim(),
+        titulo: `${proposta.titulo} — ${pp.palestrante?.nome ?? ""}`.trim(),
         data_evento: lead.data_pretendida,
         cidade: lead.cidade_evento,
         formato: lead.formato,
