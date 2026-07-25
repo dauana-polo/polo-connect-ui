@@ -13,6 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plane, Hotel, Car, MapPin, User2 } from "lucide-react";
+import { Can } from "@/components/shared/Can";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
 
 export const Route = createFileRoute("/app/logistica")({ component: LogisticaPage });
 
@@ -52,7 +55,7 @@ function LogisticaPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<LogisticaRow | null>(null);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const logisticaQuery = useQuery({
     queryKey: ["logistica-lista"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -63,6 +66,9 @@ function LogisticaPage() {
       return (data ?? []) as unknown as LogisticaRow[];
     },
   });
+  const rows = logisticaQuery.data ?? [];
+  const isLoading = logisticaQuery.isLoading;
+  
 
   const selected = rows.find((r) => r.id === selectedId) ?? rows[0] ?? null;
 
@@ -108,7 +114,9 @@ function LogisticaPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-sm text-muted-foreground text-center py-10">Carregando…</div>
+          <LoadingState label="Carregando logística..." />
+        ) : logisticaQuery.error ? (
+          <ErrorState onRetry={() => logisticaQuery.refetch()} />
         ) : rows.length === 0 ? (
           <Card className="p-10 text-center text-muted-foreground">
             Nenhuma logística — registros são criados automaticamente quando uma venda é fechada no CRM.
@@ -198,9 +206,13 @@ function LogisticaPage() {
                   <Textarea rows={3} value={draft.observacoes ?? ""} onChange={(e) => setF("observacoes", e.target.value)} />
                 </Section>
 
-                <Button className="w-full" onClick={() => save.mutate(draft)} disabled={save.isPending}>
-                  {save.isPending ? "Salvando…" : "Salvar logística"}
-                </Button>
+                <Can resource="logistica" action="edit" fallback={
+                  <div className="text-xs text-center text-muted-foreground p-2 border rounded">Somente leitura</div>
+                }>
+                  <Button className="w-full" onClick={() => save.mutate(draft)} disabled={save.isPending}>
+                    {save.isPending ? "Salvando…" : "Salvar logística"}
+                  </Button>
+                </Can>
               </Card>
             )}
           </div>

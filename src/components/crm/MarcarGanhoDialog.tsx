@@ -45,24 +45,28 @@ export function MarcarGanhoDialog({
   const confirmar = useMutation({
     mutationFn: async () => {
       if (!proposta) throw new Error("Crie uma proposta antes de marcar como ganho.");
-      if (!lead.cliente_id) throw new Error("Vincule um cliente ao lead antes.");
+      if (!lead.cliente_id) throw new Error("Vincule um cliente ao lead antes de fechar a venda.");
+      if (!lead.data_pretendida) throw new Error("Defina a data pretendida do evento antes de fechar.");
       const escolhidos = palestrantes.filter((pp) => sel[pp.id]);
-      if (escolhidos.length === 0) throw new Error("Selecione ao menos 1 palestrante.");
+      if (escolhidos.length === 0) throw new Error("Selecione ao menos 1 palestrante recomendado.");
+      const semCache = escolhidos.filter((pp: any) => !pp.cache_proposto || Number(pp.cache_proposto) <= 0);
+      if (semCache.length > 0) {
+        const nomes = semCache.map((pp: any) => pp.palestrante?.nome ?? "palestrante").join(", ");
+        throw new Error(`Defina o cachê proposto na proposta para: ${nomes}.`);
+      }
 
       // Conflict check: same palestrante, same data_evento, status != cancelado
-      if (lead.data_pretendida) {
-        const ids = escolhidos.map((pp: any) => pp.palestrante_id);
-        const { data: conflitos, error: eConf } = await supabase
-          .from("vendas")
-          .select("palestrante_id, palestrantes(nome)")
-          .in("palestrante_id", ids)
-          .eq("data_evento", lead.data_pretendida)
-          .neq("status", "cancelado");
-        if (eConf) throw eConf;
-        if (conflitos && conflitos.length > 0) {
-          const nomes = Array.from(new Set(conflitos.map((c: any) => c.palestrantes?.nome).filter(Boolean))).join(", ");
-          throw new Error(`Conflito de agenda em ${lead.data_pretendida}: ${nomes || "palestrante"} já possui evento nesta data.`);
-        }
+      const ids = escolhidos.map((pp: any) => pp.palestrante_id);
+      const { data: conflitos, error: eConf } = await supabase
+        .from("vendas")
+        .select("palestrante_id, palestrantes(nome)")
+        .in("palestrante_id", ids)
+        .eq("data_evento", lead.data_pretendida)
+        .neq("status", "cancelado");
+      if (eConf) throw eConf;
+      if (conflitos && conflitos.length > 0) {
+        const nomes = Array.from(new Set(conflitos.map((c: any) => c.palestrantes?.nome).filter(Boolean))).join(", ");
+        throw new Error(`Conflito de agenda em ${lead.data_pretendida}: ${nomes || "palestrante"} já possui evento nesta data.`);
       }
 
       // Insert 1 venda per selected palestrante; triggers create kanban_cards + logistica + nps automatically
@@ -96,6 +100,8 @@ export function MarcarGanhoDialog({
       setOpen(false); setSel({});
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["lead", lead.id] });
+      qc.invalidateQueries({ queryKey: ["vendas"] });
+      qc.invalidateQueries({ queryKey: ["kanban"] });
     },
     onError: (e: any) => toast.error(e.message),
   });

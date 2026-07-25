@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026-07-25] - Bloco 2b Operacional
+
+- **Agenda** (`app.agenda.tsx`): dialog "Novo compromisso" migrado para RHF+Zod (`compromissoSchema` com `requiredString` no título e validação de data/hora); botão de criar gated por `<Can resource="agenda" action="edit">`; `LoadingState`/`ErrorState` cobrindo o carregamento do mês.
+- **Tarefas** (`app.tarefas.tsx`): dialog "Nova tarefa" com RHF+Zod (`tarefaSchema`); `AsyncState` na lista; botão criar, checkbox de conclusão e botão de excluir gated por `<Can resource="tarefas" action="edit">`; exclusão passa por `ConfirmDialog`.
+- **Processos** (`app.processos.tsx`): `NovoProcessoDialog` reescrito com RHF+Zod (`processoSchema`); `AsyncState` na grade; ações "Avançar etapa" e "Remover" no drawer gated por `<Can resource="processos" action="edit">`; remoção passa por `ConfirmDialog`.
+- **Logística** (`app.logistica.tsx`): `LoadingState`/`ErrorState` no carregamento; botão "Salvar logística" gated por `<Can resource="logistica" action="edit">` com fallback informando modo somente leitura.
+- **Palestrantes** (`app.palestrantes.tsx`): botões novo/editar/excluir gated por `<Can resource="palestrantes" action="edit">`; lista lateral usando `AsyncState` com empty/error consistentes.
+- **Eventos** (`app.eventos.tsx`): já opera como leitura (checklists + NPS) — sem ações mutativas, mantido; relacionamentos venda↔checklists e venda↔NPS validados.
+- **Marcar como Ganho** (`MarcarGanhoDialog`): validações reforçadas — exige proposta, cliente vinculado, data pretendida, ao menos um palestrante recomendado marcado, e cachê proposto > 0 em cada selecionado; conflito de agenda por palestrante/data continua checado; invalida `vendas` e `kanban` após sucesso para refletir automaticamente kanban operacional e checklists gerados pelo trigger `criar_kanban_venda`. Gate `<Can resource="crm" action="edit">` já aplicado no ponto de disparo (LeadDrawer + botão de topo do CRM no Bloco 2a).
+
+## [2026-07-24] - Bloco 2a Comercial finalizado
+
+
 ## [2026-07-24] - Bloco 2a Comercial finalizado
 
 - **LeadDrawer (CRM)**: `TabDetalhes` migrado para react-hook-form + zod (schema com `requiredString`, `optionalEmail`, `phoneSchema`, `isoDateSchema`); campos ficam `disabled` sem permissão `crm:edit`; botão Salvar, wizard "Nova venda" e "Marcar como ganho" gated por `<Can>`; select de etapa desabilitado sem permissão.

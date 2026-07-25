@@ -19,7 +19,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { formatBRL } from "@/lib/crm/constants";
-import { Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, AlertCircle, Crown, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, Crown, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Can } from "@/components/shared/Can";
+import { AsyncState } from "@/components/shared/AsyncState";
 
 export const Route = createFileRoute("/app/palestrantes")({ component: PalestrantesPage });
 
@@ -161,40 +163,47 @@ function PalestrantesPage() {
               <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar..." className="pl-8 h-9" />
             </div>
-            <Button size="sm" onClick={openNew}><Plus className="h-4 w-4" /></Button>
+            <Can resource="palestrantes" action="edit">
+              <Button size="sm" onClick={openNew}><Plus className="h-4 w-4" /></Button>
+            </Can>
           </div>
-          {isLoading ? (
-            <div className="text-sm text-muted-foreground p-4">Carregando…</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-sm text-muted-foreground p-4 border rounded-lg text-center">
-              Nenhum palestrante cadastrado. Clique em <b>+</b> para começar.
-            </div>
-          ) : filtered.map((x) => (
-            <button
-              key={x.id}
-              onClick={() => setSelectedId(x.id)}
-              className={`w-full text-left p-3 rounded-lg border transition ${p?.id === x.id ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
-            >
-              <div className="flex items-center gap-3">
-                {x.foto_url ? (
-                  <img src={x.foto_url} className="h-10 w-10 rounded-full object-cover" alt="" />
-                ) : (
-                  <div className="h-10 w-10 rounded-full bg-muted grid place-items-center text-xs font-semibold">
-                    {x.nome[0]}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate flex items-center gap-1">
-                    {x.nome}
-                    {x.exclusivo && <Crown className="h-3 w-3 text-amber-500" />}
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {formatBRL(x.cache_padrao ?? 0)} · ⭐ {Number(x.avaliacao_media ?? 0).toFixed(1)}
-                  </div>
-                </div>
-              </div>
-            </button>
-          ))}
+          <AsyncState
+            loading={isLoading}
+            data={filtered}
+            emptyTitle="Nenhum palestrante"
+            emptyDescription="Cadastre o primeiro palestrante clicando em +."
+          >
+            {(list) => (
+              <>
+                {list.map((x) => (
+                  <button
+                    key={x.id}
+                    onClick={() => setSelectedId(x.id)}
+                    className={`w-full text-left p-3 rounded-lg border transition ${p?.id === x.id ? "bg-primary/5 border-primary" : "bg-card hover:bg-muted"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {x.foto_url ? (
+                        <img src={x.foto_url} className="h-10 w-10 rounded-full object-cover" alt="" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-muted grid place-items-center text-xs font-semibold">
+                          {x.nome[0]}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm truncate flex items-center gap-1">
+                          {x.nome}
+                          {x.exclusivo && <Crown className="h-3 w-3 text-amber-500" />}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {formatBRL(x.cache_padrao ?? 0)} · ⭐ {Number(x.avaliacao_media ?? 0).toFixed(1)}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+          </AsyncState>
         </div>
 
         <div className="col-span-12 lg:col-span-9 space-y-5">
@@ -233,10 +242,12 @@ function PalestrantesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="h-4 w-4 mr-1" /> Editar</Button>
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirmDelete(true)}>
-                      <Trash2 className="h-4 w-4 mr-1" /> Excluir
-                    </Button>
+                    <Can resource="palestrantes" action="edit">
+                      <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="h-4 w-4 mr-1" /> Editar</Button>
+                      <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirmDelete(true)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                      </Button>
+                    </Can>
                   </div>
                 </div>
                 {vendasAtivas.length > 0 && (
