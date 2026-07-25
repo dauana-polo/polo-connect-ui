@@ -19,7 +19,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { formatBRL } from "@/lib/crm/constants";
-import { Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, AlertCircle, Crown, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, Crown, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Can } from "@/components/shared/Can";
+import { AsyncState } from "@/components/shared/AsyncState";
 
 export const Route = createFileRoute("/app/palestrantes")({ component: PalestrantesPage });
 
