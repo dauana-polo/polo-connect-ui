@@ -213,7 +213,7 @@ function ProcessosPage() {
         description="Esta ação não pode ser desfeita."
         destructive
         confirmLabel="Remover"
-        onConfirm={() => toDelete && remover.mutate(toDelete)}
+        onConfirm={() => { if (toDelete) remover.mutate(toDelete); }}
       />
     </>
   );
