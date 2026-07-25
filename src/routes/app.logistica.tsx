@@ -116,7 +116,9 @@ function LogisticaPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-sm text-muted-foreground text-center py-10">Carregando…</div>
+          <LoadingState label="Carregando logística..." />
+        ) : logisticaQuery.error ? (
+          <ErrorState onRetry={() => logisticaQuery.refetch()} />
         ) : rows.length === 0 ? (
           <Card className="p-10 text-center text-muted-foreground">
             Nenhuma logística — registros são criados automaticamente quando uma venda é fechada no CRM.
