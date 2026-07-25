@@ -208,9 +208,13 @@ function LogisticaPage() {
                   <Textarea rows={3} value={draft.observacoes ?? ""} onChange={(e) => setF("observacoes", e.target.value)} />
                 </Section>
 
-                <Button className="w-full" onClick={() => save.mutate(draft)} disabled={save.isPending}>
-                  {save.isPending ? "Salvando…" : "Salvar logística"}
-                </Button>
+                <Can resource="logistica" action="edit" fallback={
+                  <div className="text-xs text-center text-muted-foreground p-2 border rounded">Somente leitura</div>
+                }>
+                  <Button className="w-full" onClick={() => save.mutate(draft)} disabled={save.isPending}>
+                    {save.isPending ? "Salvando…" : "Salvar logística"}
+                  </Button>
+                </Can>
               </Card>
             )}
           </div>
