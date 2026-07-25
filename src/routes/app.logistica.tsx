@@ -13,6 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plane, Hotel, Car, MapPin, User2 } from "lucide-react";
+import { Can } from "@/components/shared/Can";
+import { usePermissions } from "@/hooks/usePermissions";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { ErrorState } from "@/components/shared/ErrorState";
 
 export const Route = createFileRoute("/app/logistica")({ component: LogisticaPage });
 
