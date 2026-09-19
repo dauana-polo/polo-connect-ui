@@ -258,6 +258,7 @@ export type Database = {
           estado: string | null
           id: string
           logradouro: string | null
+          matriz_id: string | null
           nome_fantasia: string | null
           numero: string | null
           razao_social: string
@@ -282,6 +283,7 @@ export type Database = {
           estado?: string | null
           id?: string
           logradouro?: string | null
+          matriz_id?: string | null
           nome_fantasia?: string | null
           numero?: string | null
           razao_social: string
@@ -306,6 +308,7 @@ export type Database = {
           estado?: string | null
           id?: string
           logradouro?: string | null
+          matriz_id?: string | null
           nome_fantasia?: string | null
           numero?: string | null
           razao_social?: string
@@ -321,6 +324,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas_polo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_matriz_id_fkey"
+            columns: ["matriz_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
         ]
@@ -843,12 +853,14 @@ export type Database = {
           aliq_iss: number | null
           aliq_pis: number | null
           ativo: boolean | null
+          cargo_representante: string | null
           cnpj: string
           created_at: string | null
           id: string
           nome_fantasia: string | null
           razao_social: string
           regime: string | null
+          representante_legal: string | null
         }
         Insert: {
           aliq_cofins?: number | null
@@ -857,12 +869,14 @@ export type Database = {
           aliq_iss?: number | null
           aliq_pis?: number | null
           ativo?: boolean | null
+          cargo_representante?: string | null
           cnpj: string
           created_at?: string | null
           id?: string
           nome_fantasia?: string | null
           razao_social: string
           regime?: string | null
+          representante_legal?: string | null
         }
         Update: {
           aliq_cofins?: number | null
@@ -871,12 +885,14 @@ export type Database = {
           aliq_iss?: number | null
           aliq_pis?: number | null
           ativo?: boolean | null
+          cargo_representante?: string | null
           cnpj?: string
           created_at?: string | null
           id?: string
           nome_fantasia?: string | null
           razao_social?: string
           regime?: string | null
+          representante_legal?: string | null
         }
         Relationships: []
       }
@@ -923,6 +939,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faixas_cache: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          ordem: number
+          valor_max: number | null
+          valor_min: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          ordem: number
+          valor_max?: number | null
+          valor_min: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          ordem?: number
+          valor_max?: number | null
+          valor_min?: number
+        }
+        Relationships: []
       }
       kanban_cards: {
         Row: {
@@ -1016,48 +1059,99 @@ export type Database = {
       }
       lead_palestrante_recomendacoes: {
         Row: {
+          atendimento_iniciado_em: string | null
+          atendimento_por: string | null
+          cache_confirmado: number | null
           cache_proposto: number | null
+          cancelado_em: string | null
+          cancelado_por: string | null
           created_at: string | null
           criado_por: string | null
           disponibilidade_verificada_em: string | null
+          enviado_negociacao_em: string | null
+          enviado_negociacao_por: string | null
           id: string
           lead_id: string
+          motivo_indisponibilidade: string | null
           observacoes: string | null
           ordem: number | null
+          palestra_id: string | null
           palestrante_id: string
+          respondido_por: string | null
           status: string
           updated_at: string | null
         }
         Insert: {
+          atendimento_iniciado_em?: string | null
+          atendimento_por?: string | null
+          cache_confirmado?: number | null
           cache_proposto?: number | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           created_at?: string | null
           criado_por?: string | null
           disponibilidade_verificada_em?: string | null
+          enviado_negociacao_em?: string | null
+          enviado_negociacao_por?: string | null
           id?: string
           lead_id: string
+          motivo_indisponibilidade?: string | null
           observacoes?: string | null
           ordem?: number | null
+          palestra_id?: string | null
           palestrante_id: string
+          respondido_por?: string | null
           status?: string
           updated_at?: string | null
         }
         Update: {
+          atendimento_iniciado_em?: string | null
+          atendimento_por?: string | null
+          cache_confirmado?: number | null
           cache_proposto?: number | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           created_at?: string | null
           criado_por?: string | null
           disponibilidade_verificada_em?: string | null
+          enviado_negociacao_em?: string | null
+          enviado_negociacao_por?: string | null
           id?: string
           lead_id?: string
+          motivo_indisponibilidade?: string | null
           observacoes?: string | null
           ordem?: number | null
+          palestra_id?: string | null
           palestrante_id?: string
+          respondido_por?: string | null
           status?: string
           updated_at?: string | null
         }
         Relationships: [
           {
+            foreignKeyName: "lead_palestrante_recomendacoes_atendimento_por_fkey"
+            columns: ["atendimento_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_palestrante_recomendacoes_cancelado_por_fkey"
+            columns: ["cancelado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lead_palestrante_recomendacoes_criado_por_fkey"
             columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_palestrante_recomendacoes_enviado_negociacao_por_fkey"
+            columns: ["enviado_negociacao_por"]
             isOneToOne: false
             referencedRelation: "usuarios"
             referencedColumns: ["id"]
@@ -1070,10 +1164,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lead_palestrante_recomendacoes_palestra_id_fkey"
+            columns: ["palestra_id"]
+            isOneToOne: false
+            referencedRelation: "palestras"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lead_palestrante_recomendacoes_palestrante_id_fkey"
             columns: ["palestrante_id"]
             isOneToOne: false
             referencedRelation: "palestrantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_palestrante_recomendacoes_respondido_por_fkey"
+            columns: ["respondido_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
             referencedColumns: ["id"]
           },
         ]
@@ -1534,6 +1642,53 @@ export type Database = {
           },
         ]
       }
+      palestras: {
+        Row: {
+          ativo: boolean
+          cache_referencia: number | null
+          created_at: string
+          descricao: string | null
+          id: string
+          ordem: number
+          palestrante_id: string
+          titulo: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cache_referencia?: number | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          palestrante_id: string
+          titulo: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cache_referencia?: number | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          palestrante_id?: string
+          titulo?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "palestras_palestrante_id_fkey"
+            columns: ["palestrante_id"]
+            isOneToOne: false
+            referencedRelation: "palestrantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processos: {
         Row: {
           cliente_id: string | null
@@ -1614,9 +1769,13 @@ export type Database = {
       proposta_palestrantes: {
         Row: {
           cache_proposto: number | null
+          condicoes_pagamento: string | null
+          empresa_polo_id: string | null
+          ganho: boolean
           id: string
           justificativa: string | null
           ordem: number | null
+          palestra_id: string | null
           palestrante_id: string | null
           proposta_id: string | null
           recomendacao_id: string | null
@@ -1624,9 +1783,13 @@ export type Database = {
         }
         Insert: {
           cache_proposto?: number | null
+          condicoes_pagamento?: string | null
+          empresa_polo_id?: string | null
+          ganho?: boolean
           id?: string
           justificativa?: string | null
           ordem?: number | null
+          palestra_id?: string | null
           palestrante_id?: string | null
           proposta_id?: string | null
           recomendacao_id?: string | null
@@ -1634,15 +1797,33 @@ export type Database = {
         }
         Update: {
           cache_proposto?: number | null
+          condicoes_pagamento?: string | null
+          empresa_polo_id?: string | null
+          ganho?: boolean
           id?: string
           justificativa?: string | null
           ordem?: number | null
+          palestra_id?: string | null
           palestrante_id?: string | null
           proposta_id?: string | null
           recomendacao_id?: string | null
           selecionado?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "proposta_palestrantes_empresa_polo_id_fkey"
+            columns: ["empresa_polo_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_polo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_palestrantes_palestra_id_fkey"
+            columns: ["palestra_id"]
+            isOneToOne: false
+            referencedRelation: "palestras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "proposta_palestrantes_palestrante_id_fkey"
             columns: ["palestrante_id"]
@@ -1958,6 +2139,7 @@ export type Database = {
           id: string
           lead_id: string | null
           local_evento: string | null
+          palestra_id: string | null
           palestrante_id: string
           proposta_id: string | null
           publico_estimado: number | null
@@ -1990,6 +2172,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           local_evento?: string | null
+          palestra_id?: string | null
           palestrante_id: string
           proposta_id?: string | null
           publico_estimado?: number | null
@@ -2022,6 +2205,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           local_evento?: string | null
+          palestra_id?: string | null
           palestrante_id?: string
           proposta_id?: string | null
           publico_estimado?: number | null
@@ -2074,6 +2258,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vendas_palestra_id_fkey"
+            columns: ["palestra_id"]
+            isOneToOne: false
+            referencedRelation: "palestras"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vendas_palestrante_id_fkey"
             columns: ["palestrante_id"]
             isOneToOne: false
@@ -2095,6 +2286,64 @@ export type Database = {
     }
     Functions: {
       atualizar_status_contas: { Args: never; Returns: undefined }
+      comissoes_lista: {
+        Args: {
+          p_limit?: number
+          p_mes_fim?: string
+          p_mes_inicio?: string
+          p_offset?: number
+          p_tipo?: string
+        }
+        Returns: {
+          base_calculo: number
+          cliente_razao_social: string
+          created_at: string
+          id: string
+          pago: boolean
+          pago_em: string
+          palestrante_nome: string
+          percentual: number
+          tipo: string
+          total_count: number
+          valor: number
+          venda_data_evento: string
+          venda_id: string
+          venda_titulo: string
+        }[]
+      }
+      comissoes_meses_disponiveis: {
+        Args: never
+        Returns: {
+          ano: number
+          mes: number
+        }[]
+      }
+      comissoes_por_mes: {
+        Args: { p_mes_fim?: string; p_mes_inicio?: string; p_tipo?: string }
+        Returns: {
+          ano: number
+          mes: number
+          pago: number
+          quantidade: number
+          total: number
+        }[]
+      }
+      comissoes_por_tipo: {
+        Args: { p_mes_fim?: string; p_mes_inicio?: string; p_tipo?: string }
+        Returns: {
+          tipo: string
+          valor: number
+        }[]
+      }
+      comissoes_resumo: {
+        Args: { p_mes_fim?: string; p_mes_inicio?: string; p_tipo?: string }
+        Returns: {
+          total_bruto: number
+          total_pago: number
+          total_pendente: number
+          vendas_unicas: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2117,6 +2366,7 @@ export type Database = {
         | "financeiro"
         | "logistica"
         | "palestrante"
+        | "negociacao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2132,12 +2382,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2161,11 +2411,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2186,11 +2436,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2211,11 +2461,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2228,11 +2478,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2253,6 +2503,7 @@ export const Constants = {
         "financeiro",
         "logistica",
         "palestrante",
+        "negociacao",
       ],
     },
   },
