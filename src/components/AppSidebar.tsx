@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, FileText, Kanban, DollarSign, Scale,
   Settings, Mic2, Search, ChevronDown, Sparkles,
   Plane, ClipboardCheck, Building2, TrendingUp, UserCog, Wallet, PieChart, Menu, LogOut,
-  CalendarDays, CheckSquare, Workflow,
+  CalendarDays, CheckSquare, Handshake,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
@@ -23,7 +23,7 @@ const nav = [
   { group: "Produtividade", items: [
     { to: "/app/agenda", label: "Agenda", icon: CalendarDays },
     { to: "/app/tarefas", label: "Tarefas", icon: CheckSquare },
-    { to: "/app/processos", label: "Processos", icon: Workflow },
+    { to: "/app/consultas", label: "Consulta/Negociação", icon: Handshake },
   ]},
   { group: "Cadastros", items: [
     { to: "/app/clientes", label: "Clientes 360°", icon: Building2 },

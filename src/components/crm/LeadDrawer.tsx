@@ -28,7 +28,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { requiredString, optionalEmail, phoneSchema, isoDateSchema } from "@/lib/validators";
 import {
   Trash2, Plus, Phone, Mail, MessageSquare, Calendar, CheckCircle2,
-  Clock, ArrowRight, AlertTriangle, FileText,
+  Clock, ArrowRight, AlertTriangle, FileText, Send, BellRing,
 } from "lucide-react";
 
 type Lead = any;
@@ -326,9 +326,14 @@ function TabRecomendacoes({ leadId }: { leadId: string }) {
       <div className="space-y-2">
         {recs.map((r) => (
           <div key={r.id} className="rounded-lg border p-3 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="font-medium text-sm">{r.palestrante?.nome}</div>
-              <Button size="icon" variant="ghost" onClick={() => remove.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+              <div className="flex items-center gap-1">
+                <Button size="sm" variant="outline" onClick={() => toast.success(`${r.palestrante?.nome} seria enviado para Consulta/Negociação. Nenhum dado foi alterado.`)}>
+                  <Send className="h-3.5 w-3.5" /> Enviar para consulta
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => remove.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Input type="number" value={r.cache_proposto ?? ""} onBlur={(e) => update.mutate({ id: r.id, patch: { cache_proposto: e.target.value ? Number(e.target.value) : null } })}
@@ -634,6 +639,7 @@ function TabComentarios({ leadId }: { leadId: string }) {
     },
   });
   const [texto, setTexto] = useState("");
+  const pessoas = ["Marina", "Rafael", "Bianca"];
   const enviar = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("crm_comentarios").insert({ lead_id: leadId, texto });
@@ -644,9 +650,22 @@ function TabComentarios({ leadId }: { leadId: string }) {
   });
   return (
     <div className="space-y-3 pt-2">
-      <div className="flex gap-2">
-        <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Comentário interno…" rows={2} />
-        <Button onClick={() => texto && enviar.mutate()} disabled={!texto}>Enviar</Button>
+      <div className="space-y-2 rounded-lg border p-3">
+        <div className="flex gap-2">
+          <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Comentário interno… Use @ para marcar alguém" rows={2} />
+          <Button onClick={() => texto && enviar.mutate()} disabled={!texto}>Enviar</Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">Marcar no protótipo:</span>
+          {pessoas.map((pessoa) => (
+            <Button key={pessoa} size="sm" variant="outline" className="h-7 text-xs" onClick={() => {
+              setTexto((atual) => `${atual}${atual ? " " : ""}@${pessoa} `);
+              toast.info(`${pessoa} receberia uma notificação ao enviar.`);
+            }}>
+              <BellRing className="h-3 w-3" /> @{pessoa}
+            </Button>
+          ))}
+        </div>
       </div>
       <div className="space-y-2">
         {coms.map((c) => (
