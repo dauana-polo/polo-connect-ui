@@ -10,12 +10,15 @@ import { toast } from "sonner";
 import { Sparkles, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   component: AuthPage,
   head: () => ({
     meta: [
       { title: "Acesso — Polo Palestrantes" },
       { name: "description", content: "Entre ou crie sua conta na plataforma Polo Palestrantes." },
+      { property: "og:title", content: "Acesso — Polo Palestrantes" },
+      { property: "og:description", content: "Entre ou crie sua conta na plataforma Polo Palestrantes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });
