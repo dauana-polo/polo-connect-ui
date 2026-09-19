@@ -32,6 +32,7 @@ import { Route as AppJuridicoRouteImport } from './routes/app.juridico'
 import { Route as AppFinanceiroRouteImport } from './routes/app.financeiro'
 import { Route as AppEventosRouteImport } from './routes/app.eventos'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
+import { Route as AppConsultasRouteImport } from './routes/app.consultas'
 import { Route as AppComissoesRouteImport } from './routes/app.comissoes'
 import { Route as AppClientesRouteImport } from './routes/app.clientes'
 import { Route as AppAgendaRouteImport } from './routes/app.agenda'
@@ -152,6 +153,11 @@ const AppCrmRoute = AppCrmRouteImport.update({
   path: '/crm',
   getParentRoute: () => AppRoute,
 } as any)
+const AppConsultasRoute = AppConsultasRouteImport.update({
+  id: '/consultas',
+  path: '/consultas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppComissoesRoute = AppComissoesRouteImport.update({
   id: '/comissoes',
   path: '/comissoes',
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/app/agenda': typeof AppAgendaRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
+  '/app/consultas': typeof AppConsultasRoute
   '/app/crm': typeof AppCrmRoute
   '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/app/agenda': typeof AppAgendaRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
+  '/app/consultas': typeof AppConsultasRoute
   '/app/crm': typeof AppCrmRoute
   '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/app/agenda': typeof AppAgendaRoute
   '/app/clientes': typeof AppClientesRoute
   '/app/comissoes': typeof AppComissoesRoute
+  '/app/consultas': typeof AppConsultasRoute
   '/app/crm': typeof AppCrmRoute
   '/app/eventos': typeof AppEventosRoute
   '/app/financeiro': typeof AppFinanceiroRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/app/agenda'
     | '/app/clientes'
     | '/app/comissoes'
+    | '/app/consultas'
     | '/app/crm'
     | '/app/eventos'
     | '/app/financeiro'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/app/agenda'
     | '/app/clientes'
     | '/app/comissoes'
+    | '/app/consultas'
     | '/app/crm'
     | '/app/eventos'
     | '/app/financeiro'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/app/agenda'
     | '/app/clientes'
     | '/app/comissoes'
+    | '/app/consultas'
     | '/app/crm'
     | '/app/eventos'
     | '/app/financeiro'
@@ -522,6 +534,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCrmRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/consultas': {
+      id: '/app/consultas'
+      path: '/consultas'
+      fullPath: '/app/consultas'
+      preLoaderRoute: typeof AppConsultasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/comissoes': {
       id: '/app/comissoes'
       path: '/comissoes'
@@ -558,6 +577,7 @@ interface AppRouteChildren {
   AppAgendaRoute: typeof AppAgendaRoute
   AppClientesRoute: typeof AppClientesRoute
   AppComissoesRoute: typeof AppComissoesRoute
+  AppConsultasRoute: typeof AppConsultasRoute
   AppCrmRoute: typeof AppCrmRoute
   AppEventosRoute: typeof AppEventosRoute
   AppFinanceiroRoute: typeof AppFinanceiroRoute
@@ -578,6 +598,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAgendaRoute: AppAgendaRoute,
   AppClientesRoute: AppClientesRoute,
   AppComissoesRoute: AppComissoesRoute,
+  AppConsultasRoute: AppConsultasRoute,
   AppCrmRoute: AppCrmRoute,
   AppEventosRoute: AppEventosRoute,
   AppFinanceiroRoute: AppFinanceiroRoute,
