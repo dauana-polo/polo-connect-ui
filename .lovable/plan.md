@@ -1,79 +1,58 @@
-# Sprint 01 — Consolidação da Base
+# Plano — Protótipo de Consulta e Negociação
 
-Escopo: **auditoria + refatoração interna sem alterar UX, layout ou fluxo funcional**. Nenhuma nova feature.
+## Objetivo
+Criar somente uma demonstração visual dos novos fluxos, sem gravar dados, consultar o banco ou alterar o funcionamento atual. Os exemplos serão fictícios e as ações existirão para navegar e visualizar estados do protótipo.
 
-## 1. Levantamento (leitura, sem mudanças)
+## O que será criado
 
-- Mapear todas as 19 rotas `app.*.tsx` e catalogar padrões duplicados.
-- Rodar `supabase--linter` para pegar RLS/policy/índice ausentes.
-- Rodar `security--run_security_scan`.
-- Verificar `routeTree`, guards de rota (`_authenticated`), middleware de auth em `start.ts`.
-- Listar todas as queries diretas ao Supabase espalhadas nas rotas.
+### 1. Nova área “Consulta/Negociação”
+- Trocar no menu o acesso visível de “Processos” por “Consulta/Negociação”.
+- Manter a página e a rota atual de Processos preservadas, apenas fora do menu principal.
+- Criar um painel de consultas com filas: novas solicitações, em contato, disponível, indisponível e concluída.
+- Exibir cliente, evento, data, comercial responsável, palestrantes consultados e andamento.
+- Ao abrir uma consulta, mostrar campos demonstrativos para anotações, cachê, condições, disponibilidade e retorno do palestrante.
+- Simular o aviso ao comercial quando a disponibilidade for informada.
 
-## 2. Refatorações estruturais (sem impacto visual)
+### 2. Fluxo visual no CRM
+- Acrescentar a ação “Enviar para consulta” aos palestrantes recomendados.
+- Mostrar o encaminhamento visual para a nova área, sem salvar ou disparar notificações reais.
+- Adicionar campo de comentário com marcação de pessoas e uma prévia da notificação gerada.
+- Preservar o funil, o cadastro e todas as ações atuais.
 
-### 2.1 Camada de dados centralizada
-Criar `src/lib/api/` com módulos por domínio:
-- `leads.ts`, `vendas.ts`, `palestrantes.ts`, `clientes.ts`, `financeiro.ts`, `agenda.ts`, `tarefas.ts`, `kanban.ts`, `comissoes.ts`, `notificacoes.ts`.
-- Cada módulo expõe funções tipadas (`listLeads`, `updateLead`, etc.) usando o cliente Supabase existente.
-- Substituir `supabase.from(...)` inline nas rotas por chamadas a essas funções.
+### 3. Recomendações e propostas
+- Criar uma visualização demonstrativa da recomendação de palestrantes.
+- Mostrar o botão “Gerar PDF de recomendações” sem gerar arquivo nesta fase.
+- Na proposta, permitir visualmente apenas palestrantes presentes na recomendação.
+- Mostrar o botão “Gerar PDF da proposta” sem gerar arquivo nesta fase.
 
-### 2.2 Hooks reutilizáveis
-`src/hooks/`:
-- `useSupabaseQuery.ts` — wrapper padronizado (loading/error/refetch + toast).
-- `useRealtimeTable.ts` — assinatura Realtime reutilizável (hoje repetida em CRM, Kanban, Notificações).
-- `useRole.ts` — leitura de `user_roles` centralizada (hoje consultada em ≥3 rotas).
-- `useEmpresaAtiva.ts` — preparar contexto multiempresa (leitura simples, sem quebrar nada).
+### 4. Cliente e contato simplificados
+- Demonstrar cadastro de cliente com opção explícita “Salvar sem CNPJ”.
+- Mostrar busca por nome/telefone com resultados fictícios antes de criar um cliente.
+- Permitir, no protótipo, escolher cliente existente ou abrir o cadastro rápido de novo cliente.
+- Incluir contato rápido com nome, e-mail, telefone e cargo.
+- Na simulação de fechamento, bloquear visualmente a venda quando o cliente estiver sem CNPJ e indicar a ação para completar o cadastro.
 
-### 2.3 Componentes compartilhados
-Extrair para `src/components/shared/`:
-- `PageHeader.tsx` (título + ações — padrão repetido em quase toda rota).
-- `KpiCard.tsx` (usado em Dashboard, Financeiro, Comissões, Pré-Balanço, Eventos).
-- `EmptyState.tsx`, `LoadingState.tsx`.
-- `DataTable.tsx` fino sobre shadcn `Table` com paginação/ordenação.
-- `MoneyInput.tsx` e helpers `formatCurrency`, `formatDate`, `formatCNPJ` em `src/lib/format.ts`.
-- `ConfirmDialog.tsx` para confirmações destrutivas (hoje reimplementado várias vezes).
+### 5. Fechamento da negociação
+- No fluxo visual de ganho, exigir a escolha do palestrante fechado.
+- Exigir que todos os demais sejam marcados como perdidos, cada um com motivo digitado.
+- Mostrar uma prévia de como esses motivos aparecerão no histórico do palestrante.
+- Impedir visualmente a confirmação enquanto houver palestrante sem resultado ou sem motivo.
 
-### 2.4 Contextos
-- Consolidar `useAuth` já existente; adicionar `RoleContext` derivado (evita refetch de perfil por página).
+## Direção visual e responsividade
+- Reutilizar o padrão visual atual do ERP, sem redesenhar módulos existentes.
+- Usar estados claros, indicadores de fila e diálogos objetivos em desktop e celular.
+- Identificar discretamente a nova área como “Protótipo”, evitando confusão com dados reais.
 
-### 2.5 Tipagens
-- Reexportar tipos gerados de `integrations/supabase/types.ts` em `src/lib/types.ts` com aliases de domínio (`Lead`, `Venda`, `Palestrante`…) para não vazar `Database['public']['Tables']…` pelo código.
+## Proteção do que já existe
+- Nenhuma alteração de tabelas, políticas, autenticação, storage ou dados.
+- Nenhuma ação do protótipo chamará operações de criação, edição ou exclusão no banco.
+- A rota atual de Processos continuará disponível e seu código não será removido.
+- O erro de carregamento observado na tela de acesso será corrigido sem mudar seu layout ou fluxo.
 
-## 3. Banco de dados
+## Validação e documentação
+- Testar navegação, abertura dos painéis, estados simulados, bloqueio por CNPJ e fechamento com motivos obrigatórios.
+- Conferir o protótipo em desktop e celular.
+- Completar e atualizar a documentação obrigatória em `/docs`, incluindo arquitetura, módulos, regras, decisões, API, banco, roadmap e histórico, deixando explícito o que é apenas protótipo.
 
-Uma migration única de consolidação:
-- **Índices** nas FKs mais consultadas: `leads.consultor_id`, `leads.cliente_id`, `vendas.lead_id`, `vendas.palestrante_id`, `vendas.cliente_id`, `kanban_cards.venda_id`, `kanban_cards(setor,coluna)`, `crm_atividades.lead_id`, `crm_historico.lead_id`, `contas_pagar.vencimento`, `contas_receber.vencimento`, `agenda_eventos.data_inicio`, `tarefas.responsavel_id`, `notificacoes(user_id, lida)`, `comissoes.venda_id`.
-- **RLS**: rodar linter, corrigir policies faltantes, garantir `service_role` grant em todas as tabelas públicas, remover policies `USING (true)` de escrita se existirem.
-- **Integridade**: conferir `ON DELETE` das FKs de palestrantes/vendas (manter `RESTRICT` conforme decisão anterior).
-- **Multiempresa (preparação, não ativação)**: adicionar coluna `empresa_id uuid NULL` em tabelas de negócio (`leads`, `vendas`, `clientes`, `palestrantes`, `contas_*`) referenciando `empresas_polo`, sem tornar NOT NULL nem alterar policies ainda — só criar o campo e o índice, para migração futura sem breaking change.
-
-Se linter apontar problemas, resolver na mesma migration.
-
-## 4. Segurança
-
-- Rodar `security--run_security_scan` e `supabase--linter` e corrigir o que aparecer.
-- Confirmar que nenhuma rota `/app/*` está fora de `_authenticated`.
-- Garantir que `handle_new_user` e demais funções `SECURITY DEFINER` têm `SET search_path = public` (já têm — validar).
-- Revisar policies para não exporem dados via `anon` em tabelas sensíveis.
-
-## 5. Performance
-
-- Substituir `select('*')` por colunas específicas nas listagens grandes (Kanban, CRM, Financeiro).
-- Adicionar `limit()` e paginação onde faltar em Auditoria e Notificações.
-- Memoizar cálculos pesados em `app.comissoes.tsx`, `app.prebalanco.tsx`, `app.financeiro.tsx` (`useMemo` onde ainda não há).
-- Verificar re-subscribes Realtime (garantir cleanup no `useEffect`).
-
-## 6. Não faz parte desta sprint
-
-- Nenhuma nova tela, rota, feature ou mudança de layout.
-- Nenhuma ativação real de multiempresa (só schema preparatório).
-- Nenhuma alteração em integrações externas.
-
-## 7. Entregável final
-
-Relatório em chat cobrindo os 6 tópicos pedidos (Arquitetura, Banco, Código, Segurança, Performance, Próximos passos) com o que foi de fato alterado e o que ficou como recomendação.
-
----
-
-**Confirma este plano?** Posso executar tudo em sequência (é uma sprint de refactor extensa — múltiplos arquivos novos em `lib/api`, `hooks`, `components/shared`, substituições em cada rota, e 1 migration consolidada).
+## Resultado esperado
+Um protótipo navegável que demonstra todo o fluxo comercial → consulta → retorno → proposta → ganho/perda, com dados fictícios e sem impacto nos dados ou funcionalidades atuais.
