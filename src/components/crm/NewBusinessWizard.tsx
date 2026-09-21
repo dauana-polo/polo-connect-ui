@@ -141,7 +141,7 @@ export function NewBusinessWizard({
       return prop.id;
     },
     onSuccess: () => {
-      toast.success("Negócio criado com sucesso");
+      toast.success("Recomendação e proposta criadas com sucesso");
       setOpen(false); setStep(1); setSel({}); setTitulo(""); setBusca("");
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["lead", lead.id] });
@@ -158,14 +158,14 @@ export function NewBusinessWizard({
         <DialogTrigger asChild>
           {trigger ?? (
             <Button size="sm" variant="outline">
-              <Briefcase className="h-4 w-4 mr-1.5" /> Novo Negócio
+              <Briefcase className="h-4 w-4 mr-1.5" /> Criar recomendação
             </Button>
           )}
         </DialogTrigger>
       )}
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Negócio — passo {step} de 3</DialogTitle>
+          <DialogTitle>Recomendação e proposta — passo {step} de 3</DialogTitle>
         </DialogHeader>
 
         {step === 1 && (
