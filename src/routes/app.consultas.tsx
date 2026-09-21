@@ -172,7 +172,6 @@ function statusBadge(status: ConsultationStatus) {
 }
 
 function ConsultasPrototype() {
-  const [tab, setTab] = useState("consultas");
   const [filter, setFilter] = useState<ConsultationStatus | "todas">("todas");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Consultation | null>(null);
@@ -201,15 +200,7 @@ function ConsultasPrototype() {
           </Button>
         </div>
 
-        <Tabs value={tab} onValueChange={setTab} className="space-y-5">
-          <TabsList className="h-auto w-full justify-start overflow-x-auto bg-transparent p-0">
-            <TabsTrigger value="consultas">Painel de consultas</TabsTrigger>
-            <TabsTrigger value="documentos">Recomendação e proposta</TabsTrigger>
-            <TabsTrigger value="cliente">Cliente e contato</TabsTrigger>
-            <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="consultas" className="space-y-4">
+        <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               {STATUS.map(({ id, label, icon: Icon }) => {
                 const count = CONSULTAS.filter((item) => item.status === id).length;
@@ -250,18 +241,7 @@ function ConsultasPrototype() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="documentos">
-            <DocumentsPrototype />
-          </TabsContent>
-          <TabsContent value="cliente">
-            <ClientPrototype />
-          </TabsContent>
-          <TabsContent value="fechamento">
-            <ClosingPrototype />
-          </TabsContent>
-        </Tabs>
+        </div>
       </main>
       <ConsultationDrawer item={selected} onClose={() => setSelected(null)} />
     </>

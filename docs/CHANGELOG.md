@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-09-21] - Protótipo comercial, negociação e pós-venda
+
+- Criada a área visual `Consulta/Negociação`, limitada à negociação e ao retorno dos palestrantes, com dados fictícios.
+- Adicionado ao CRM o protótipo integrado de cliente/contatos, recomendação, proposta em PDF e fechamento obrigatório com CNPJ e motivos de perda.
+- Adicionada ao Pós-venda uma visão geral de Jurídico, Logística, Financeiro e Faturamento, com dossiê demonstrativo de envolvidos, faturador, documentos, QR Code e atividades.
+- A rota de Processos foi preservada fora do menu.
+- Corrigida a estabilidade da hidratação da tela de acesso sem mudar seu fluxo visual.
+- Nenhum schema, dado, arquivo ou integração externa foi alterado; todas as novas ações são demonstrativas.
+
 ## [2026-07-25] - Bloco 2b Operacional
 
 - **Agenda** (`app.agenda.tsx`): dialog "Novo compromisso" migrado para RHF+Zod (`compromissoSchema` com `requiredString` no título e validação de data/hora); botão de criar gated por `<Can resource="agenda" action="edit">`; `LoadingState`/`ErrorState` cobrindo o carregamento do mês.

@@ -81,7 +81,7 @@ function AuthPage() {
             CRM, propostas, contratos, logística e financeiro em um só lugar.
           </p>
         </div>
-        <div className="text-xs text-white/50">© {new Date().getFullYear()} Polo Palestrantes</div>
+        <div className="text-xs text-white/50">© 2026 Polo Palestrantes</div>
       </div>
 
       <div className="flex items-center justify-center p-6 lg:p-12">
