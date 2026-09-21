@@ -23,6 +23,7 @@ import {
 import { NewBusinessWizard } from "./NewBusinessWizard";
 import { GerarSugestaoPDF } from "./GerarSugestaoPDF";
 import { MarcarGanhoDialog } from "./MarcarGanhoDialog";
+import { CrmCommercialPrototype } from "./CrmCommercialPrototype";
 import { Can } from "@/components/shared/Can";
 import { usePermissions } from "@/hooks/usePermissions";
 import { requiredString, optionalEmail, phoneSchema, isoDateSchema } from "@/lib/validators";
@@ -117,8 +118,9 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
             </SheetHeader>
 
             <Tabs defaultValue="detalhes" className="px-6 py-4">
-              <TabsList className="grid w-full grid-cols-7 h-auto">
+              <TabsList className="grid w-full grid-cols-4 gap-1 h-auto sm:grid-cols-8">
                 <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
+                <TabsTrigger value="comercial">Comercial</TabsTrigger>
                 <TabsTrigger value="recomendacoes">Recom.</TabsTrigger>
                 <TabsTrigger value="consultas">Consultas</TabsTrigger>
                 <TabsTrigger value="propostas">Propostas</TabsTrigger>
@@ -128,6 +130,7 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
               </TabsList>
 
               <TabsContent value="detalhes"><TabDetalhes lead={lead} /></TabsContent>
+              <TabsContent value="comercial"><CrmCommercialPrototype /></TabsContent>
               <TabsContent value="recomendacoes"><TabRecomendacoes leadId={lead.id} /></TabsContent>
               <TabsContent value="consultas"><TabConsultas leadId={lead.id} /></TabsContent>
               <TabsContent value="propostas"><TabPropostas lead={lead} /></TabsContent>

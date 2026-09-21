@@ -23,3 +23,4 @@
 - Cliente, contatos, recomendação, proposta e fechamento obrigatório permanecem no CRM comercial.
 - O Pós-venda ganha uma visão demonstrativa consolidada de Jurídico, Logística, Financeiro e Faturamento.
 - Nenhuma ação dessas demonstrações persiste dados.
+- O fluxo demonstrativo comercial é acessado dentro do card de cada negociação no CRM, não por uma área paralela.
