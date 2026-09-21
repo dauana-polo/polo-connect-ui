@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { formatBRL } from "@/lib/crm/constants";
 import {
   Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, Crown, Search, Plus, Pencil, Trash2,
-  Eye, Images, Plane, Mic2, ImageIcon, Video, Download, ShieldCheck, Hotel, Utensils, Car, Volume2,
+  Eye, Images, Plane, Mic2, ImageIcon, Video, Download, Hotel, Utensils, Car, Volume2,
   Monitor, Wifi, Lightbulb, Accessibility,
 } from "lucide-react";
 import { Can } from "@/components/shared/Can";
