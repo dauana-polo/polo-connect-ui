@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026-09-21] - Fluxo comercial consolidado no CRM
+
+- Removido o acesso paralelo ao protótipo comercial no topo do CRM.
+- Cliente, contatos, recomendação, proposta e fechamento passaram a aparecer dentro do card da negociação.
+- A etapa de cliente ganhou opções demonstrativas para vincular um cadastro existente ou criar e incluir um novo cliente.
+- Mantidas as regras visuais de CNPJ obrigatório no fechamento, palestrante ganho e motivo de perda dos demais.
+- Nenhum dado, tabela ou fluxo persistente foi alterado.
+
 ## [2026-09-21] - Protótipo comercial, negociação e pós-venda
 
 - Criada a área visual `Consulta/Negociação`, limitada à negociação e ao retorno dos palestrantes, com dados fictícios.

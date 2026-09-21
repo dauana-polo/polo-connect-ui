@@ -7,3 +7,5 @@
 - [x] Incluir no protótipo do Pós-venda: dados de cliente, interveniente, testemunha, responsável pelo faturamento, documentos, checklist/QR code e atividades pré-definidas e extras.
 - [x] Preservar funcionalidades e dados atuais; novas interações permanecem demonstrativas.
 - [x] Completar a documentação obrigatória em /docs e validar desktop/mobile.
+- [ ] Consolidar cliente, contatos, recomendação, proposta e fechamento dentro de cada negociação do CRM.
+- [ ] Remover o acesso paralelo ao fluxo comercial e validar o painel em desktop/mobile.

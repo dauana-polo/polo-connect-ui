@@ -17,9 +17,20 @@ import { Can } from "@/components/shared/Can";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { usePermissions } from "@/hooks/usePermissions";
-import { CrmCommercialPrototype } from "@/components/crm/CrmCommercialPrototype";
 
-export const Route = createFileRoute("/app/crm")({ component: CRM });
+export const Route = createFileRoute("/app/crm")({
+  head: () => ({
+    meta: [
+      { title: "CRM Comercial — Polo Palestrantes" },
+      { name: "description", content: "Pipeline comercial, negociações, recomendações, propostas e fechamento." },
+      { property: "og:title", content: "CRM Comercial — Polo Palestrantes" },
+      { property: "og:description", content: "Gestão do fluxo comercial da Polo Palestrantes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: CRM,
+});
 
 type Lead = {
   id: string; empresa: string; etapa: Etapa; tema_evento: string | null;
@@ -186,7 +197,6 @@ function CRM() {
             </Select>
           </div>
           <div className="flex flex-wrap gap-2">
-            <CrmCommercialPrototype />
             <Can resource="crm" action="edit"><NewLeadDialog /></Can>
           </div>
         </div>
