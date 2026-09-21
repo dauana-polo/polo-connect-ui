@@ -9,3 +9,4 @@
 - [x] Completar a documentação obrigatória em /docs e validar desktop/mobile.
 - [x] Consolidar cliente, contatos, recomendação, proposta e fechamento dentro de cada negociação do CRM.
 - [x] Remover o acesso paralelo ao fluxo comercial e validar o painel em desktop/mobile.
+- [x] Integrar cliente e contato ao formulário de novo negócio e tratar recomendação/fechamento apenas como regras.

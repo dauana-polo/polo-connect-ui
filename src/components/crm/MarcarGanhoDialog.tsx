@@ -113,7 +113,7 @@ export function MarcarGanhoDialog({
       if (e2) throw e2;
     },
     onSuccess: () => {
-      toast.success(`Venda(s) criada(s) e operação iniciada!`);
+       toast.success(`Venda(s) criada(s) e operação iniciada! Motivos de perda validados neste protótipo.`);
       setOpen(false); setSel({}); setMotivosPerda({});
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["lead", lead.id] });

@@ -12,7 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building2 } from "lucide-react";
+import { Plus, Building2, Contact, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { requiredString } from "@/lib/validators";
 
@@ -54,6 +54,7 @@ export function NewLeadDialog() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [showSugg, setShowSugg] = useState(false);
+  const [clienteMode, setClienteMode] = useState<"existente" | "novo">("existente");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -81,7 +82,21 @@ export function NewLeadDialog() {
     },
   });
 
-  useEffect(() => { if (!open) { reset(); setShowSugg(false); } }, [open, reset]);
+  const { data: contatos = [] } = useQuery({
+    queryKey: ["novo-negocio-contatos", clienteIdVal],
+    enabled: open && !!clienteIdVal,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cliente_contatos")
+        .select("id,nome,email,telefone,cargo,principal")
+        .eq("cliente_id", clienteIdVal)
+        .order("principal", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  useEffect(() => { if (!open) { reset(); setShowSugg(false); setClienteMode("existente"); } }, [open, reset]);
 
   const criar = useMutation({
     mutationFn: async (values: FormValues) => {
@@ -118,24 +133,38 @@ export function NewLeadDialog() {
     setShowSugg(false);
   };
 
+  const pickContato = (contato: any) => {
+    setValue("contato_nome", contato.nome ?? "");
+    setValue("contato_email", contato.email ?? "");
+    setValue("contato_tel", contato.telefone ?? "");
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button><Plus className="h-4 w-4 mr-1.5" /> Novo Atendimento</Button>
+        <Button><Plus className="h-4 w-4 mr-1.5" /> Novo negócio</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Novo atendimento</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Novo negócio</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit((v) => criar.mutate(v))} className="space-y-3">
+          <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
+            <Button type="button" size="sm" variant={clienteMode === "existente" ? "default" : "ghost"} onClick={() => setClienteMode("existente")}>
+              <Building2 className="h-4 w-4" /> Cliente existente
+            </Button>
+            <Button type="button" size="sm" variant={clienteMode === "novo" ? "default" : "ghost"} onClick={() => { setClienteMode("novo"); setValue("cliente_id", ""); setValue("empresa", ""); }}>
+              <UserPlus className="h-4 w-4" /> Incluir cliente novo
+            </Button>
+          </div>
           <div className="space-y-1 relative">
-            <Label className="text-xs">Empresa *</Label>
+            <Label className="text-xs">{clienteMode === "existente" ? "Buscar cliente por nome *" : "Nome do novo cliente *"}</Label>
             <Input
               {...register("empresa")}
               onChange={(e) => { setValue("empresa", e.target.value); setValue("cliente_id", ""); setShowSugg(true); }}
               onFocus={() => setShowSugg(true)}
-              placeholder="Digite para buscar em clientes…"
+              placeholder={clienteMode === "existente" ? "Digite para buscar em clientes…" : "Digite o nome do cliente"}
             />
             {errors.empresa && <div className="text-[11px] text-rose-500">{errors.empresa.message}</div>}
-            {showSugg && clientes.length > 0 && (
+            {clienteMode === "existente" && showSugg && clientes.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-md z-10 max-h-48 overflow-auto">
                 {clientes.map((c: any) => (
                   <button
@@ -158,14 +187,41 @@ export function NewLeadDialog() {
             {clienteIdVal && (
               <div className="text-[11px] text-emerald-600">✓ Vinculado a cliente existente</div>
             )}
+            {clienteMode === "novo" && (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Input placeholder="Telefone do cliente" />
+                <Input placeholder="CNPJ opcional nesta fase" />
+                <p className="col-span-2 text-[11px] text-muted-foreground">O novo cliente será incluído junto ao negócio; o CNPJ será exigido somente no fechamento.</p>
+              </div>
+            )}
           </div>
+          {clienteIdVal && (
+            <div className="space-y-2 rounded-lg border p-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Contatos existentes deste cliente</Label>
+                <span className="text-[11px] text-muted-foreground">ou preencha um novo abaixo</span>
+              </div>
+              {contatos.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {contatos.map((contato: any) => (
+                    <Button key={contato.id} type="button" variant="outline" className="h-auto justify-start p-3 text-left" onClick={() => pickContato(contato)}>
+                      <Contact className="h-4 w-4 shrink-0" />
+                      <span className="min-w-0"><span className="block truncate text-sm">{contato.nome}</span><span className="block truncate text-[11px] text-muted-foreground">{contato.cargo || contato.email || contato.telefone || "Contato cadastrado"}</span></span>
+                    </Button>
+                  ))}
+                </div>
+              ) : <p className="text-xs text-muted-foreground">Nenhum contato cadastrado. Inclua um novo contato abaixo.</p>}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label className="text-xs">Contato</Label>
-              <Input {...register("contato_nome")} /></div>
+            <div className="col-span-2 flex items-center gap-2 border-t pt-3 text-sm font-medium"><UserPlus className="h-4 w-4" /> Incluir novo contato no negócio</div>
+            <div className="space-y-1"><Label className="text-xs">Nome do contato</Label>
+              <Input {...register("contato_nome")} placeholder="Nome" /></div>
             <div className="space-y-1"><Label className="text-xs">Telefone</Label>
               <Input {...register("contato_tel")} />
               {errors.contato_tel && <div className="text-[11px] text-rose-500">{errors.contato_tel.message}</div>}
             </div>
+            <div className="space-y-1"><Label className="text-xs">Cargo</Label><Input placeholder="Cargo" /></div>
             <div className="space-y-1 col-span-2"><Label className="text-xs">E-mail</Label>
               <Input type="email" {...register("contato_email")} />
               {errors.contato_email && <div className="text-[11px] text-rose-500">{errors.contato_email.message}</div>}
@@ -208,7 +264,7 @@ export function NewLeadDialog() {
             <Textarea rows={3} {...register("descricao")} />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={criar.isPending}>Criar atendimento</Button>
+            <Button type="submit" disabled={criar.isPending}>Criar negócio</Button>
           </DialogFooter>
         </form>
       </DialogContent>

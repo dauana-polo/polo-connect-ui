@@ -21,7 +21,7 @@ O Polo Connect usa TanStack Start, React 19, TanStack Router, TanStack Query, Ta
 - Ações sensíveis usam `<Can />`; a proteção real permanece nas políticas do banco.
 - Cores e estados visuais usam tokens semânticos definidos em `src/styles.css`.
 - Os protótipos de Consulta/Negociação, fluxo comercial e dossiê pós-venda são visuais: não gravam novos campos ou documentos.
-- O fluxo comercial demonstrativo é renderizado dentro do painel lateral de cada negociação do CRM; não existe página ou acesso paralelo para cliente e fechamento.
+- Cliente e contato integram a criação do negócio no CRM. Recomendação e fechamento permanecem nas ações existentes, com validações próprias, sem criar etapas paralelas.
 
 ## Autenticação
 

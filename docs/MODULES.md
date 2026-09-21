@@ -23,4 +23,5 @@
 - Cliente, contatos, recomendação, proposta e fechamento obrigatório permanecem no CRM comercial.
 - O Pós-venda ganha uma visão demonstrativa consolidada de Jurídico, Logística, Financeiro e Faturamento.
 - Nenhuma ação dessas demonstrações persiste dados.
-- O fluxo demonstrativo comercial é acessado dentro do card de cada negociação no CRM, não por uma área paralela.
+- A criação do negócio no CRM oferece cliente existente ou novo e contatos existentes ou novo contato.
+- Recomendação e fechamento são regras aplicadas às ações comerciais existentes, não abas ou etapas adicionais do funil.
