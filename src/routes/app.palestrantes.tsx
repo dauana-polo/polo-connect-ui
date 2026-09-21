@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,11 +20,27 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { formatBRL } from "@/lib/crm/constants";
-import { Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, Crown, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import {
+  Star, MapPin, Landmark, FileText, Calendar, Wallet, Briefcase, Crown, Search, Plus, Pencil, Trash2,
+  Eye, Images, Plane, Mic2, ImageIcon, Video, Download, Hotel, Utensils, Car, Volume2,
+  Monitor, Wifi, Lightbulb, Accessibility,
+} from "lucide-react";
 import { Can } from "@/components/shared/Can";
 import { AsyncState } from "@/components/shared/AsyncState";
 
-export const Route = createFileRoute("/app/palestrantes")({ component: PalestrantesPage });
+export const Route = createFileRoute("/app/palestrantes")({
+  head: () => ({
+    meta: [
+      { title: "Cadastro de Palestrantes — Polo Connect" },
+      { name: "description", content: "Painel interno com cadastro, materiais, agenda, logística e informações comerciais dos palestrantes." },
+      { property: "og:title", content: "Cadastro de Palestrantes — Polo Connect" },
+      { property: "og:description", content: "Gestão interna dos perfis e materiais dos palestrantes da Polo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: PalestrantesPage,
+});
 
 type Palestrante = {
   id: string;
@@ -67,6 +84,7 @@ function PalestrantesPage() {
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Partial<Palestrante> | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [clientVisibility, setClientVisibility] = useState<Record<string, { valor: boolean; agenda: boolean }>>({});
 
   const { data: lista = [], isLoading } = useQuery({
     queryKey: ["palestrantes"],
@@ -89,20 +107,33 @@ function PalestrantesPage() {
     queryKey: ["palestrante-vinculos", p?.id],
     enabled: !!p,
     queryFn: async () => {
-      const [vendas, contratos, contasPagar] = await Promise.all([
-        supabase.from("vendas").select("id,titulo,data_evento,cidade,valor_total,cache_palestr,status,cliente:clientes(razao_social)").eq("palestrante_id", p!.id).order("data_evento", { ascending: false }),
+      const palestranteId = p?.id;
+      if (!palestranteId) throw new Error("Selecione um palestrante.");
+      const [vendas, contratos, contasPagar, documentos] = await Promise.all([
+        supabase.from("vendas").select("id,titulo,data_evento,cidade,valor_total,cache_palestr,status,cliente:clientes(razao_social)").eq("palestrante_id", palestranteId).order("data_evento", { ascending: false }),
         supabase.from("contratos").select("id,numero,status,tipo,cliente:clientes(razao_social)").in("venda_id", []),
-        supabase.from("contas_pagar").select("id,descricao,valor,vencimento,status").eq("palestrante_id", p!.id).order("vencimento", { ascending: false }),
+        supabase.from("contas_pagar").select("id,descricao,valor,vencimento,status").eq("palestrante_id", palestranteId).order("vencimento", { ascending: false }),
+        supabase.from("documentos").select("id,nome,tipo,url,tamanho_kb,created_at").eq("palestrante_id", palestranteId).order("created_at", { ascending: false }),
       ]);
       return {
         vendas: (vendas.data ?? []) as any[],
         contratos: (contratos.data ?? []) as any[],
         contasPagar: (contasPagar.data ?? []) as any[],
+        documentos: (documentos.data ?? []) as any[],
       };
     },
   });
 
   const vendasAtivas = (vinculos?.vendas ?? []).filter((v) => v.status !== "cancelado");
+  const visibility = p ? clientVisibility[p.id] ?? { valor: false, agenda: false } : { valor: false, agenda: false };
+  const setVisibility = (field: "valor" | "agenda", value: boolean) => {
+    if (!p) return;
+    setClientVisibility((current) => ({
+      ...current,
+      [p.id]: { ...(current[p.id] ?? { valor: false, agenda: false }), [field]: value },
+    }));
+    toast.info("Prévia atualizada somente nesta tela; nenhuma informação foi salva.");
+  };
 
   const save = useMutation({
     mutationFn: async (form: Partial<Palestrante>) => {
@@ -257,14 +288,89 @@ function PalestrantesPage() {
                 )}
               </Card>
 
-              <Tabs defaultValue="fiscal">
-                <TabsList className="flex-wrap">
+              <Card className="border-primary/20 p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary"><Eye className="h-4 w-4" /></div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold">Cliente pode visualizar</h3>
+                        <Badge variant="outline">Prévia interna</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">Defina quais informações comerciais poderão ser mostradas ao cliente.</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[420px]">
+                    <VisibilityControl label="Valor do palestrante" checked={visibility.valor} onCheckedChange={(checked) => setVisibility("valor", checked)} />
+                    <VisibilityControl label="Agenda do palestrante" checked={visibility.agenda} onCheckedChange={(checked) => setVisibility("agenda", checked)} />
+                  </div>
+                </div>
+              </Card>
+
+              <Tabs defaultValue="conteudo">
+                <TabsList className="h-auto flex-wrap justify-start">
+                  <TabsTrigger value="conteudo"><Eye className="h-3.5 w-3.5 mr-1" /> Perfil</TabsTrigger>
+                  <TabsTrigger value="materiais"><Images className="h-3.5 w-3.5 mr-1" /> Fotos e documentos</TabsTrigger>
+                  <TabsTrigger value="rider"><Mic2 className="h-3.5 w-3.5 mr-1" /> Logística e rider</TabsTrigger>
                   <TabsTrigger value="fiscal"><Landmark className="h-3.5 w-3.5 mr-1" /> Fiscal & Endereço</TabsTrigger>
                   <TabsTrigger value="bancario"><Wallet className="h-3.5 w-3.5 mr-1" /> Bancário</TabsTrigger>
                   <TabsTrigger value="comercial"><Briefcase className="h-3.5 w-3.5 mr-1" /> Comercial</TabsTrigger>
                   <TabsTrigger value="agenda"><Calendar className="h-3.5 w-3.5 mr-1" /> Agenda / Vendas</TabsTrigger>
                   <TabsTrigger value="docs"><FileText className="h-3.5 w-3.5 mr-1" /> Financeiro</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="conteudo">
+                  <Card className="overflow-hidden">
+                    <div className="grid lg:grid-cols-[240px_1fr]">
+                      <div className="min-h-64 bg-muted">
+                        {p.foto_url ? <img src={p.foto_url} alt={`Foto de ${p.nome}`} className="h-full min-h-64 w-full object-cover" /> : <div className="grid h-full min-h-64 place-items-center text-muted-foreground"><ImageIcon className="h-10 w-10" /></div>}
+                      </div>
+                      <div className="space-y-5 p-6">
+                        <div><div className="text-xs font-semibold uppercase text-muted-foreground">Mini bio</div><p className="mt-2 text-sm leading-6">{p.mini_bio ?? "Não informada pelo palestrante."}</p></div>
+                        <div><div className="text-xs font-semibold uppercase text-muted-foreground">Bio completa</div><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{p.bio ?? "Não informada pelo palestrante."}</p></div>
+                        <div className="grid gap-4 border-t pt-4 sm:grid-cols-2">
+                          <Field label="Nome artístico">{p.nome_artistico ?? "—"}</Field>
+                          <Field label="Formatos">{(p.formatos ?? []).join(", ") || "—"}</Field>
+                        </div>
+                        <div><div className="text-xs font-semibold uppercase text-muted-foreground">Temas</div><div className="mt-2 flex flex-wrap gap-1.5">{(p.temas ?? []).length ? p.temas?.map((tema) => <Badge key={tema} variant="secondary">{tema}</Badge>) : <span className="text-sm text-muted-foreground">Nenhum tema informado.</span>}</div></div>
+                      </div>
+                    </div>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="materiais">
+                  <div className="space-y-4">
+                    <Card className="p-5">
+                      <div className="mb-4 flex items-center justify-between"><div><h4 className="font-semibold">Fotos enviadas</h4><p className="text-xs text-muted-foreground">Materiais visuais disponíveis no cadastro.</p></div><Badge variant="outline">Somente visualização</Badge></div>
+                      {p.foto_url ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="overflow-hidden rounded-md border"><img src={p.foto_url} alt={`Material de ${p.nome}`} className="aspect-[4/3] w-full object-cover" /><div className="p-3 text-sm font-medium">Foto principal</div></div></div> : <EmptyPanel icon={<ImageIcon className="h-6 w-6" />} title="Nenhuma foto disponível" description="As fotos enviadas pelo palestrante aparecerão aqui." />}
+                    </Card>
+                    <Card className="p-5">
+                      <div className="mb-4 flex items-center justify-between"><div><h4 className="font-semibold">Vídeo e documentos</h4><p className="text-xs text-muted-foreground">Arquivos vinculados a este palestrante.</p></div><Badge variant="outline">{(vinculos?.documentos.length ?? 0) + (p.video_url ? 1 : 0)} item(ns)</Badge></div>
+                      <div className="space-y-2">
+                        {p.video_url && <MaterialRow icon={<Video className="h-4 w-4" />} name="Vídeo de apresentação" type="Vídeo" url={p.video_url} />}
+                        {(vinculos?.documentos ?? []).map((documento: any) => <MaterialRow key={documento.id} icon={<FileText className="h-4 w-4" />} name={documento.nome} type={documento.tipo ?? "Documento"} url={documento.url} detail={documento.tamanho_kb ? `${documento.tamanho_kb} KB` : undefined} />)}
+                        {!p.video_url && (vinculos?.documentos.length ?? 0) === 0 && <EmptyPanel icon={<FileText className="h-6 w-6" />} title="Nenhum documento disponível" description="Documentos e vídeos enviados pelo palestrante aparecerão aqui." />}
+                      </div>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="rider">
+                  <Card className="p-5">
+                    <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h4 className="font-semibold">Informações de logística e rider técnico</h4><p className="mt-1 text-xs text-muted-foreground">Visão interna das preferências informadas pelo palestrante.</p></div><Badge variant="outline">Somente visualização</Badge></div>
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      <InfoPanel icon={<Plane />} title="Viagem" text="Preferências de companhia, horários e aeroporto: não informado." />
+                      <InfoPanel icon={<Hotel />} title="Hospedagem" text="Categoria, quarto e necessidades de hospedagem: não informado." />
+                      <InfoPanel icon={<Car />} title="Traslados" text="Preferências de transporte e deslocamento local: não informado." />
+                      <InfoPanel icon={<Utensils />} title="Alimentação" text="Restrições alimentares e preferências: não informado." />
+                      <InfoPanel icon={<Volume2 />} title="Áudio e microfone" text="Microfone, retorno, mesa e demais requisitos: não informado." />
+                      <InfoPanel icon={<Monitor />} title="Palco e vídeo" text="Tela, projeção, palco e formato de apresentação: não informado." />
+                      <InfoPanel icon={<Lightbulb />} title="Iluminação" text="Necessidades de luz e ambientação: não informado." />
+                      <InfoPanel icon={<Wifi />} title="Internet" text="Conectividade e recursos online: não informado." />
+                      <InfoPanel icon={<Accessibility />} title="Acessibilidade e observações" text="Acompanhantes, mobilidade e outras necessidades: não informado." />
+                    </div>
+                  </Card>
+                </TabsContent>
 
                 <TabsContent value="fiscal">
                   <Card className="p-5 grid md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
@@ -383,7 +489,7 @@ function PalestrantesPage() {
           {editing && <PalestranteForm form={editing} setForm={setEditing} />}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpenForm(false)}>Cancelar</Button>
-            <Button onClick={() => save.mutate(editing!)} disabled={save.isPending}>
+            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending || !editing}>
               {save.isPending ? "Salvando…" : "Salvar"}
             </Button>
           </DialogFooter>
@@ -410,13 +516,29 @@ function PalestrantesPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <div className="text-[11px] uppercase text-muted-foreground font-semibold tracking-wider mb-1">{label}</div>
       <div className="font-medium">{children}</div>
     </div>
   );
+}
+
+function VisibilityControl({ label, checked, onCheckedChange }: { label: string; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+  return <div className="flex min-h-14 items-center justify-between gap-3 rounded-md border bg-muted/30 px-3"><div><div className="text-sm font-medium">{label}</div><div className="text-xs text-muted-foreground">{checked ? "Liberado na prévia" : "Não liberado"}</div></div><Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} /></div>;
+}
+
+function EmptyPanel({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
+  return <div className="grid min-h-36 place-items-center rounded-md border border-dashed p-6 text-center"><div><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-md bg-muted text-muted-foreground">{icon}</div><div className="text-sm font-medium">{title}</div><div className="mt-1 text-xs text-muted-foreground">{description}</div></div></div>;
+}
+
+function MaterialRow({ icon, name, type, url, detail }: { icon: ReactNode; name: string; type: string; url: string; detail?: string }) {
+  return <div className="flex items-center gap-3 rounded-md border p-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">{icon}</div><div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{name}</div><div className="text-xs text-muted-foreground">{type}{detail ? ` · ${detail}` : ""}</div></div><Button asChild size="icon" variant="ghost"><a href={url} target="_blank" rel="noreferrer" aria-label={`Abrir ${name}`}><Download className="h-4 w-4" /></a></Button></div>;
+}
+
+function InfoPanel({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return <div className="min-h-32 rounded-md border p-4"><div className="mb-3 flex items-center gap-2 text-primary">{icon}<span className="text-sm font-semibold text-foreground">{title}</span></div><p className="text-xs leading-5 text-muted-foreground">{text}</p></div>;
 }
 
 function PalestranteForm({
@@ -537,7 +659,7 @@ function PalestranteForm({
   );
 }
 
-function F({ label, children }: { label: string; children: React.ReactNode }) {
+function F({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>

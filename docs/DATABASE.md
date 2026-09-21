@@ -30,4 +30,4 @@ As tabelas públicas usam RLS. Papéis são armazenados separadamente em `user_r
 
 ## Estado do protótipo atual
 
-Nenhuma tabela, política, função, storage ou dado foi alterado. Campos de interveniente, testemunha, faturador, anexos e atividades operacionais exibidos no dossiê pós-venda são apenas demonstrativos.
+Nenhuma tabela, política, função, storage ou dado foi alterado. Campos de interveniente, testemunha, faturador, anexos e atividades operacionais exibidos no dossiê pós-venda são apenas demonstrativos. No cadastro de palestrantes, as liberações de valor/agenda e os campos de logística/rider também são somente visuais. A área de materiais consulta apenas `foto_url`, `video_url` e registros existentes de `documentos` vinculados por `palestrante_id`.

@@ -10,3 +10,5 @@
 - [x] Consolidar cliente, contatos, recomendação, proposta e fechamento dentro de cada negociação do CRM.
 - [x] Remover o acesso paralelo ao fluxo comercial e validar o painel em desktop/mobile.
 - [x] Integrar cliente e contato ao formulário de novo negócio e tratar recomendação/fechamento apenas como regras.
+- [x] Ampliar a visualização interna de Palestrantes com perfil, materiais, documentos, logística e rider técnico.
+- [x] Demonstrar liberações separadas para clientes visualizarem valor e agenda, sem alterar dados ou acessos reais.

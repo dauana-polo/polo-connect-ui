@@ -21,3 +21,5 @@
 - Pós-venda será o ponto de controle geral do andamento de Jurídico, Logística, Financeiro e Faturamento.
 - Novos campos, anexos, atividades, obrigatoriedades e notificações são apenas protótipo visual. Essa escolha preserva banco, dados e comportamento existentes até validação da cliente.
 - Cliente e contato são partes da criação do negócio no CRM. Recomendação e fechamento não são etapas do funil: são regras obrigatórias aplicadas às ações de proposta e ganho.
+- O cadastro de palestrantes será a fonte interna consolidada para conteúdos enviados pelo palestrante, fotos, documentos, logística e rider técnico.
+- Valor e agenda terão permissões de visualização para clientes separadas. Na fase atual, esses controles são somente demonstrativos e não modificam banco, portal público ou políticas de acesso.
