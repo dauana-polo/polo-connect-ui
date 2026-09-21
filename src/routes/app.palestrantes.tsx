@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -106,11 +107,13 @@ function PalestrantesPage() {
     queryKey: ["palestrante-vinculos", p?.id],
     enabled: !!p,
     queryFn: async () => {
+      const palestranteId = p?.id;
+      if (!palestranteId) throw new Error("Selecione um palestrante.");
       const [vendas, contratos, contasPagar, documentos] = await Promise.all([
-        supabase.from("vendas").select("id,titulo,data_evento,cidade,valor_total,cache_palestr,status,cliente:clientes(razao_social)").eq("palestrante_id", p!.id).order("data_evento", { ascending: false }),
+        supabase.from("vendas").select("id,titulo,data_evento,cidade,valor_total,cache_palestr,status,cliente:clientes(razao_social)").eq("palestrante_id", palestranteId).order("data_evento", { ascending: false }),
         supabase.from("contratos").select("id,numero,status,tipo,cliente:clientes(razao_social)").in("venda_id", []),
-        supabase.from("contas_pagar").select("id,descricao,valor,vencimento,status").eq("palestrante_id", p!.id).order("vencimento", { ascending: false }),
-        supabase.from("documentos").select("id,nome,tipo,url,tamanho_kb,created_at").eq("palestrante_id", p!.id).order("created_at", { ascending: false }),
+        supabase.from("contas_pagar").select("id,descricao,valor,vencimento,status").eq("palestrante_id", palestranteId).order("vencimento", { ascending: false }),
+        supabase.from("documentos").select("id,nome,tipo,url,tamanho_kb,created_at").eq("palestrante_id", palestranteId).order("created_at", { ascending: false }),
       ]);
       return {
         vendas: (vendas.data ?? []) as any[],
@@ -486,7 +489,7 @@ function PalestrantesPage() {
           {editing && <PalestranteForm form={editing} setForm={setEditing} />}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpenForm(false)}>Cancelar</Button>
-            <Button onClick={() => save.mutate(editing!)} disabled={save.isPending}>
+            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending || !editing}>
               {save.isPending ? "Salvando…" : "Salvar"}
             </Button>
           </DialogFooter>
@@ -513,7 +516,7 @@ function PalestrantesPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <div className="text-[11px] uppercase text-muted-foreground font-semibold tracking-wider mb-1">{label}</div>
@@ -526,15 +529,15 @@ function VisibilityControl({ label, checked, onCheckedChange }: { label: string;
   return <div className="flex min-h-14 items-center justify-between gap-3 rounded-md border bg-muted/30 px-3"><div><div className="text-sm font-medium">{label}</div><div className="text-xs text-muted-foreground">{checked ? "Liberado na prévia" : "Não liberado"}</div></div><Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} /></div>;
 }
 
-function EmptyPanel({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+function EmptyPanel({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
   return <div className="grid min-h-36 place-items-center rounded-md border border-dashed p-6 text-center"><div><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-md bg-muted text-muted-foreground">{icon}</div><div className="text-sm font-medium">{title}</div><div className="mt-1 text-xs text-muted-foreground">{description}</div></div></div>;
 }
 
-function MaterialRow({ icon, name, type, url, detail }: { icon: React.ReactNode; name: string; type: string; url: string; detail?: string }) {
+function MaterialRow({ icon, name, type, url, detail }: { icon: ReactNode; name: string; type: string; url: string; detail?: string }) {
   return <div className="flex items-center gap-3 rounded-md border p-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">{icon}</div><div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{name}</div><div className="text-xs text-muted-foreground">{type}{detail ? ` · ${detail}` : ""}</div></div><Button asChild size="icon" variant="ghost"><a href={url} target="_blank" rel="noreferrer" aria-label={`Abrir ${name}`}><Download className="h-4 w-4" /></a></Button></div>;
 }
 
-function InfoPanel({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function InfoPanel({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return <div className="min-h-32 rounded-md border p-4"><div className="mb-3 flex items-center gap-2 text-primary">{icon}<span className="text-sm font-semibold text-foreground">{title}</span></div><p className="text-xs leading-5 text-muted-foreground">{text}</p></div>;
 }
 
@@ -656,7 +659,7 @@ function PalestranteForm({
   );
 }
 
-function F({ label, children }: { label: string; children: React.ReactNode }) {
+function F({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
