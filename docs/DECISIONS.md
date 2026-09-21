@@ -20,3 +20,4 @@
 - Cliente, contato, recomendação, proposta e fechamento ficam no CRM comercial, com referência organizacional do Pipedrive sem integração externa.
 - Pós-venda será o ponto de controle geral do andamento de Jurídico, Logística, Financeiro e Faturamento.
 - Novos campos, anexos, atividades, obrigatoriedades e notificações são apenas protótipo visual. Essa escolha preserva banco, dados e comportamento existentes até validação da cliente.
+- Cliente e contato são partes da criação do negócio no CRM. Recomendação e fechamento não são etapas do funil: são regras obrigatórias aplicadas às ações de proposta e ganho.

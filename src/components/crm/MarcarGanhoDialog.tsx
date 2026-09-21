@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -18,6 +20,7 @@ export function MarcarGanhoDialog({
   const open = openProp ?? openState;
   const setOpen = (v: boolean) => { onOpenChange ? onOpenChange(v) : setOpenState(v); };
   const [sel, setSel] = useState<Record<string, boolean>>({});
+  const [motivosPerda, setMotivosPerda] = useState<Record<string, string>>({});
 
   const { data: proposta } = useQuery({
     queryKey: ["lead-ultima-proposta", lead.id],
@@ -36,6 +39,18 @@ export function MarcarGanhoDialog({
   });
 
   const palestrantes = (proposta?.proposta_palestrantes ?? []) as any[];
+  const naoEscolhidos = palestrantes.filter((pp) => !sel[pp.id]);
+  const perdasPreenchidas = naoEscolhidos.every((pp) => (motivosPerda[pp.id] ?? "").trim().length > 0);
+
+  const { data: cliente } = useQuery({
+    queryKey: ["cliente-fechamento", lead.cliente_id],
+    enabled: open && !!lead.cliente_id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clientes").select("id,cnpj").eq("id", lead.cliente_id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const total = useMemo(
     () => palestrantes.filter((pp) => sel[pp.id]).reduce((s, pp) => s + (Number(pp.cache_proposto) || 0), 0),
@@ -46,9 +61,11 @@ export function MarcarGanhoDialog({
     mutationFn: async () => {
       if (!proposta) throw new Error("Crie uma proposta antes de marcar como ganho.");
       if (!lead.cliente_id) throw new Error("Vincule um cliente ao lead antes de fechar a venda.");
+      if (!cliente?.cnpj) throw new Error("Complete o CNPJ do cliente antes de fechar a venda.");
       if (!lead.data_pretendida) throw new Error("Defina a data pretendida do evento antes de fechar.");
       const escolhidos = palestrantes.filter((pp) => sel[pp.id]);
       if (escolhidos.length === 0) throw new Error("Selecione ao menos 1 palestrante recomendado.");
+      if (!perdasPreenchidas) throw new Error("Informe o motivo da perda para todos os palestrantes não escolhidos.");
       const semCache = escolhidos.filter((pp: any) => !pp.cache_proposto || Number(pp.cache_proposto) <= 0);
       if (semCache.length > 0) {
         const nomes = semCache.map((pp: any) => pp.palestrante?.nome ?? "palestrante").join(", ");
@@ -96,8 +113,8 @@ export function MarcarGanhoDialog({
       if (e2) throw e2;
     },
     onSuccess: () => {
-      toast.success(`Venda(s) criada(s) e operação iniciada!`);
-      setOpen(false); setSel({});
+       toast.success(`Venda(s) criada(s) e operação iniciada! Motivos de perda validados neste protótipo.`);
+      setOpen(false); setSel({}); setMotivosPerda({});
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["lead", lead.id] });
       qc.invalidateQueries({ queryKey: ["vendas"] });
@@ -131,8 +148,13 @@ export function MarcarGanhoDialog({
           ) : (
             <>
               <div className="text-sm text-muted-foreground">
-                Marque os palestrantes contratados — cada um vira 1 venda + cards nos Kanbans operacionais.
+                Selecione quem foi contratado. Para concluir, o cliente precisa ter CNPJ e cada palestrante não escolhido precisa ter um motivo de perda.
               </div>
+              {!cliente?.cnpj && (
+                <div className="rounded border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  O cliente está sem CNPJ. Complete o cadastro antes do fechamento.
+                </div>
+              )}
               <div className="space-y-1.5">
                 {palestrantes.map((pp: any) => (
                   <label key={pp.id} className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
@@ -154,6 +176,22 @@ export function MarcarGanhoDialog({
                   </label>
                 ))}
               </div>
+              {Object.values(sel).some(Boolean) && naoEscolhidos.length > 0 && (
+                <div className="space-y-3 rounded-lg border p-3">
+                  <div className="text-sm font-medium">Motivos obrigatórios dos não escolhidos</div>
+                  {naoEscolhidos.map((pp: any) => (
+                    <div key={pp.id} className="space-y-1">
+                      <Label className="text-xs">{pp.palestrante?.nome ?? "Palestrante"}</Label>
+                      <Textarea
+                        rows={2}
+                        placeholder="Informe por que a indicação não foi fechada"
+                        value={motivosPerda[pp.id] ?? ""}
+                        onChange={(event) => setMotivosPerda((current) => ({ ...current, [pp.id]: event.target.value }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="rounded-lg border p-3 flex justify-between bg-emerald-50 border-emerald-200">
                 <span className="text-sm font-medium">Total acumulado</span>
                 <span className="font-semibold text-emerald-700">{formatBRL(total)}</span>
@@ -164,7 +202,7 @@ export function MarcarGanhoDialog({
         <DialogFooter>
           <Button
             onClick={() => confirmar.mutate()}
-            disabled={confirmar.isPending || !proposta || Object.values(sel).filter(Boolean).length === 0}
+            disabled={confirmar.isPending || !proposta || !cliente?.cnpj || Object.values(sel).filter(Boolean).length === 0 || !perdasPreenchidas}
             className="bg-emerald-600 hover:bg-emerald-700"
           >
             {confirmar.isPending ? "Processando…" : "Confirmar fechamento"}

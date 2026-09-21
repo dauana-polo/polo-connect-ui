@@ -7,7 +7,8 @@
 - A implementação atual cria uma venda por palestrante escolhido e inicia os registros operacionais automáticos.
 - No protótipo, o CNPJ é opcional no cadastro do cliente, mas obrigatório no fechamento; os não escolhidos exigem resultado perdido e motivo.
 - Os motivos de perda por palestrante e o fluxo Pipedrive são somente demonstrações visuais nesta fase.
-- Busca, vínculo e cadastro rápido de cliente, contatos, recomendação, proposta e validações de fechamento ficam dentro da negociação aberta no CRM.
+- Na criação de um negócio, o comercial escolhe cliente existente ou inclui um novo; ao escolher um cliente, pode aproveitar seus contatos ou incluir outro.
+- Recomendação e fechamento são regras do CRM, não etapas: proposta aceita somente recomendados; fechamento exige CNPJ e motivo para cada palestrante não escolhido.
 
 ## Operação
 

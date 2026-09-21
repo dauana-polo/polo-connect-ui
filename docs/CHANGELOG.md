@@ -2,10 +2,10 @@
 
 ## [2026-09-21] - Fluxo comercial consolidado no CRM
 
-- Removido o acesso paralelo ao protótipo comercial no topo do CRM.
-- Cliente, contatos, recomendação, proposta e fechamento passaram a aparecer dentro do card da negociação.
-- A etapa de cliente ganhou opções demonstrativas para vincular um cadastro existente ou criar e incluir um novo cliente.
-- Mantidas as regras visuais de CNPJ obrigatório no fechamento, palestrante ganho e motivo de perda dos demais.
+- Removido o acesso paralelo e a aba adicional do protótipo comercial.
+- A criação de novo negócio passou a oferecer cliente existente ou novo e listar contatos existentes, mantendo a inclusão de novo contato.
+- Recomendação e fechamento foram tratados como regras nas ações reais do CRM, sem criar novas etapas no funil.
+- O fechamento agora evidencia CNPJ obrigatório e exige motivo para cada palestrante não escolhido.
 - Nenhum dado, tabela ou fluxo persistente foi alterado.
 
 ## [2026-09-21] - Protótipo comercial, negociação e pós-venda
