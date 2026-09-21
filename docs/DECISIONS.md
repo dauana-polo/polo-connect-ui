@@ -24,3 +24,4 @@
 - O cadastro de palestrantes será a fonte interna consolidada para conteúdos enviados pelo palestrante, fotos, documentos, logística e rider técnico.
 - Valor e agenda terão permissões de visualização para clientes separadas. Na fase atual, esses controles são somente demonstrativos e não modificam banco, portal público ou políticas de acesso.
 - Materiais, logística e rider técnico são apresentados como informações editáveis pela equipe, substituindo a indicação anterior de somente visualização; a persistência desses novos campos permanece fora desta fase.
+- No CRM, “Ganho” e “Perdido” são resultados acionados somente nos cartões, não etapas visíveis do quadro. A opção “Novo funil” permanece demonstrativa nesta fase.

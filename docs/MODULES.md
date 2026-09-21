@@ -17,6 +17,12 @@
 | Financeiro | `/app/financeiro`, `/app/comissoes`, `/app/prebalanco` | Operacional; produtização avançada pendente | vendas, clientes e empresas |
 | Administração | `/app/admin` | Produção | usuários, papéis e auditoria |
 
+### CRM comercial — organização do funil
+
+- O quadro exibe somente as etapas de trabalho; “Ganho” e “Perdido” não aparecem como colunas.
+- Cada cartão possui ações diretas para marcar o negócio como ganho ou perdido.
+- “Novo funil” abre uma demonstração para informar nome e colunas, sem persistir a configuração nesta fase.
+
 ## Palestrantes — painel interno
 
 - `/app/palestrantes` mantém o cadastro e as ações existentes e passa a centralizar a visualização de perfil, mini bio, bio, foto principal, vídeo, temas e formatos.

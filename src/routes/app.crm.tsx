@@ -6,12 +6,16 @@ import { AppTopbar } from "@/components/AppSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ETAPAS, formatBRL, type Etapa } from "@/lib/crm/constants";
 import { LeadDrawer } from "@/components/crm/LeadDrawer";
 import { NewLeadDialog } from "@/components/crm/NewLeadDialog";
 import { MarcarGanhoDialog } from "@/components/crm/MarcarGanhoDialog";
-import { Calendar, Search, User, TrendingUp, Trophy, AlertCircle, DollarSign, Mic2, ChevronDown, ChevronUp, Trophy as TrophyIcon } from "lucide-react";
+import { Calendar, Search, User, TrendingUp, Trophy, AlertCircle, DollarSign, Mic2, ChevronDown, ChevronUp, Plus, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Can } from "@/components/shared/Can";
 import { LoadingState } from "@/components/shared/LoadingState";
@@ -42,16 +46,23 @@ type Lead = {
   proposta_palestrante?: string | null;
 };
 
+const ETAPAS_FUNIL = ETAPAS.filter((etapa) => !["ganho", "perdido"].includes(etapa.id));
+
 function CRM() {
   const qc = useQueryClient();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [ganhoLeadId, setGanhoLeadId] = useState<string | null>(null);
+  const [perdidoLead, setPerdidoLead] = useState<Lead | null>(null);
+  const [motivoPerda, setMotivoPerda] = useState("");
+  const [novoFunilOpen, setNovoFunilOpen] = useState(false);
+  const [nomeFunil, setNomeFunil] = useState("");
+  const [colunasFunil, setColunasFunil] = useState("");
   const [busca, setBusca] = useState("");
   const [filtroConsultor, setFiltroConsultor] = useState("all");
   const [filtroOrigem, setFiltroOrigem] = useState("all");
   const [filtroPeriodo, setFiltroPeriodo] = useState("all"); // all|7|30|90
   const [dragId, setDragId] = useState<string | null>(null);
-  const [expandedStage, setExpandedStage] = useState<string | null>(ETAPAS[0].id);
+  const [expandedStage, setExpandedStage] = useState<string | null>(ETAPAS_FUNIL[0]?.id ?? null);
 
   const { can } = usePermissions();
   const canEdit = can("crm", "edit");
@@ -90,13 +101,9 @@ function CRM() {
   });
 
   const mover = useMutation({
-    mutationFn: async ({ id, etapa }: { id: string; etapa: Etapa }) => {
+    mutationFn: async ({ id, etapa, motivo }: { id: string; etapa: Etapa; motivo?: string }) => {
       const payload: any = { etapa };
-      if (etapa === "perdido") {
-        const motivo = window.prompt("Motivo da perda?");
-        if (!motivo) throw new Error("cancelado");
-        payload.motivo_perda = motivo;
-      }
+      if (etapa === "perdido") payload.motivo_perda = motivo;
       const { error } = await supabase.from("leads").update(payload).eq("id", id);
       if (error) throw error;
     },
@@ -112,7 +119,12 @@ function CRM() {
       qc.setQueryData(["leads"], ctx?.prev);
       if (e.message !== "cancelado") toast.error(e.message ?? "Erro ao mover");
     },
-    onSuccess: () => { toast.success("Etapa atualizada"); qc.invalidateQueries({ queryKey: ["leads"] }); },
+    onSuccess: (_data, variables) => {
+      toast.success(variables.etapa === "perdido" ? "Negócio marcado como perdido" : "Etapa atualizada");
+      setPerdidoLead(null);
+      setMotivoPerda("");
+      qc.invalidateQueries({ queryKey: ["leads"] });
+    },
   });
 
   const filtrados = useMemo(() => {
@@ -145,6 +157,25 @@ function CRM() {
       if (lead && lead.etapa !== etapa) mover.mutate({ id: dragId, etapa });
     }
     setDragId(null);
+  };
+
+  const criarFunilDemonstrativo = () => {
+    if (!nomeFunil.trim()) {
+      toast.error("Informe o nome do funil.");
+      return;
+    }
+    toast.success(`Funil “${nomeFunil.trim()}” preparado nesta demonstração.`);
+    setNovoFunilOpen(false);
+    setNomeFunil("");
+    setColunasFunil("");
+  };
+
+  const confirmarPerda = () => {
+    if (!perdidoLead || !motivoPerda.trim()) {
+      toast.error("Informe o motivo da perda.");
+      return;
+    }
+    mover.mutate({ id: perdidoLead.id, etapa: "perdido", motivo: motivoPerda.trim() });
   };
 
   return (
@@ -197,6 +228,9 @@ function CRM() {
             </Select>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Can resource="crm" action="edit">
+              <Button variant="outline" onClick={() => setNovoFunilOpen(true)}><Plus className="h-4 w-4 mr-1" /> Novo funil</Button>
+            </Can>
             <Can resource="crm" action="edit"><NewLeadDialog /></Can>
           </div>
         </div>
@@ -207,7 +241,7 @@ function CRM() {
         {!isLoading && !error && (<>
         {/* Mobile: accordion list. Desktop: kanban grid */}
         <div className="md:hidden space-y-2">
-          {ETAPAS.map((stage) => {
+          {ETAPAS_FUNIL.map((stage) => {
             const stageLeads = filtrados.filter((l) => l.etapa === stage.id);
             const total = stageLeads.reduce((s, l) => s + (l.orcamento_est ?? 0), 0);
             const expanded = expandedStage === stage.id;
@@ -230,7 +264,7 @@ function CRM() {
                 {expanded && (
                   <div className="p-3 pt-0 space-y-2">
                     {stageLeads.map((l) => (
-                      <LeadCard key={l.id} l={l} onOpen={() => setOpenLeadId(l.id)} onGanho={() => setGanhoLeadId(l.id)} />
+                      <LeadCard key={l.id} l={l} onOpen={() => setOpenLeadId(l.id)} onGanho={() => setGanhoLeadId(l.id)} onPerdido={() => setPerdidoLead(l)} />
                     ))}
                     {stageLeads.length === 0 && <div className="text-[11px] text-muted-foreground text-center py-3 italic">—</div>}
                   </div>
@@ -241,7 +275,7 @@ function CRM() {
         </div>
 
         <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-9 gap-3">
-          {ETAPAS.map((stage) => {
+          {ETAPAS_FUNIL.map((stage) => {
             const stageLeads = filtrados.filter((l) => l.etapa === stage.id);
             const total = stageLeads.reduce((s, l) => s + (l.orcamento_est ?? 0), 0);
             return (
@@ -269,7 +303,7 @@ function CRM() {
                       onDragEnd={() => setDragId(null)}
                       className={`${dragId === l.id ? "opacity-40" : ""}`}
                     >
-                      <LeadCard l={l} onOpen={() => setOpenLeadId(l.id)} onGanho={() => setGanhoLeadId(l.id)} />
+                       <LeadCard l={l} onOpen={() => setOpenLeadId(l.id)} onGanho={() => setGanhoLeadId(l.id)} onPerdido={() => setPerdidoLead(l)} />
                     </div>
                   ))}
                   {stageLeads.length === 0 && <div className="text-[11px] text-muted-foreground text-center py-4 italic">—</div>}
@@ -288,11 +322,37 @@ function CRM() {
           onClose={() => setGanhoLeadId(null)}
         />
       )}
+      <Dialog open={!!perdidoLead} onOpenChange={(open) => { if (!open) { setPerdidoLead(null); setMotivoPerda(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Marcar como perdido</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="motivo-perda">Motivo da perda *</Label>
+            <Textarea id="motivo-perda" rows={4} maxLength={1000} value={motivoPerda} onChange={(event) => setMotivoPerda(event.target.value)} placeholder="Informe o motivo da perda deste negócio" />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setPerdidoLead(null); setMotivoPerda(""); }}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarPerda} disabled={mover.isPending}>Confirmar perda</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={novoFunilOpen} onOpenChange={setNovoFunilOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Criar novo funil</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2"><Label htmlFor="nome-funil">Nome do funil *</Label><Input id="nome-funil" maxLength={80} value={nomeFunil} onChange={(event) => setNomeFunil(event.target.value)} placeholder="Ex.: Eventos corporativos" /></div>
+            <div className="space-y-2"><Label htmlFor="colunas-funil">Colunas</Label><Input id="colunas-funil" maxLength={300} value={colunasFunil} onChange={(event) => setColunasFunil(event.target.value)} placeholder="Ex.: Novo contato, Proposta, Negociação" /><p className="text-xs text-muted-foreground">Separe os nomes por vírgula.</p></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNovoFunilOpen(false)}>Cancelar</Button>
+            <Button onClick={criarFunilDemonstrativo}>Criar funil</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
 
-function LeadCard({ l, onOpen, onGanho }: { l: Lead; onOpen: () => void; onGanho: () => void }) {
+function LeadCard({ l, onOpen, onGanho, onPerdido }: { l: Lead; onOpen: () => void; onGanho: () => void; onPerdido: () => void }) {
   return (
     <div className="w-full text-left bg-card rounded-lg p-3 border border-border hover:border-primary/40 hover:shadow-sm transition-all cursor-grab active:cursor-grabbing">
       <button onClick={onOpen} className="w-full text-left">
@@ -317,17 +377,12 @@ function LeadCard({ l, onOpen, onGanho }: { l: Lead; onOpen: () => void; onGanho
           )}
         </div>
       </button>
-      {l.etapa === "negociacao" && (
-        <Can resource="crm" action="edit">
-          <Button
-            size="sm"
-            className="w-full mt-2 h-7 bg-emerald-600 hover:bg-emerald-700 text-xs"
-            onClick={(e) => { e.stopPropagation(); onGanho(); }}
-          >
-            <TrophyIcon className="h-3 w-3 mr-1" /> Marcar Ganho
-          </Button>
-        </Can>
-      )}
+      <Can resource="crm" action="edit">
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={(e) => { e.stopPropagation(); onPerdido(); }}><XCircle className="h-3 w-3 mr-1" /> Perdido</Button>
+          <Button size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); onGanho(); }}><Trophy className="h-3 w-3 mr-1" /> Ganho</Button>
+        </div>
+      </Can>
     </div>
   );
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-09-21] - Funis e resultados no CRM
+
+- Removidas as colunas “Ganho” e “Perdido” do quadro comercial.
+- Adicionadas ações “Ganho” e “Perdido” diretamente em cada cartão; a perda exige motivo.
+- Adicionada a demonstração “Novo funil” para informar nome e colunas, sem persistência.
+- Removidas as ações de resultado dos detalhes do negócio.
+
 ## [2026-09-21] - Indicação de edição no painel de palestrantes
 
 - Substituída a indicação “Somente visualização” por “Editável pela equipe” nas áreas de fotos, logística e rider técnico.

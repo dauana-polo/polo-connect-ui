@@ -9,6 +9,8 @@
 - Os motivos de perda por palestrante e o fluxo Pipedrive são somente demonstrações visuais nesta fase.
 - Na criação de um negócio, o comercial escolhe cliente existente ou inclui um novo; ao escolher um cliente, pode aproveitar seus contatos ou incluir outro.
 - Recomendação e fechamento são regras do CRM, não etapas: proposta aceita somente recomendados; fechamento exige CNPJ e motivo para cada palestrante não escolhido.
+- Ganho e perdido são resultados acionados diretamente no cartão do negócio e não são colunas do funil. A perda exige motivo.
+- A criação de novos funis é demonstrativa nesta fase e não grava configurações.
 
 ## Operação
 

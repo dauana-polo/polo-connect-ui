@@ -13,3 +13,5 @@
 - [x] Ampliar a visualização interna de Palestrantes com perfil, materiais, documentos, logística e rider técnico.
 - [x] Demonstrar liberações separadas para clientes visualizarem valor e agenda, sem alterar dados ou acessos reais.
 - [x] Identificar fotos, logística e rider técnico como informações editáveis pela equipe, mantendo a demonstração sem persistência.
+- [x] Retirar ganho/perdido das colunas do CRM e manter essas ações somente nos cartões.
+- [x] Adicionar opção demonstrativa para criar um novo funil comercial.
