@@ -17,6 +17,13 @@
 | Financeiro | `/app/financeiro`, `/app/comissoes`, `/app/prebalanco` | Operacional; produtização avançada pendente | vendas, clientes e empresas |
 | Administração | `/app/admin` | Produção | usuários, papéis e auditoria |
 
+## Palestrantes — visualização interna
+
+- `/app/palestrantes` mantém o cadastro e as ações existentes e passa a centralizar a visualização de perfil, mini bio, bio, foto principal, vídeo, temas e formatos.
+- A área “Cliente pode visualizar” demonstra liberações separadas de valor e agenda, sem persistência ou exposição real nesta fase.
+- Fotos e documentos vinculados já existentes são apresentados em uma área própria.
+- Logística e rider técnico possuem uma visão interna demonstrativa para viagem, hospedagem, traslados, alimentação, áudio, palco, vídeo, iluminação, internet e acessibilidade.
+
 ## Protótipos de 2026-09-21
 
 - Consulta/Negociação cuida somente do retorno e das condições negociadas com palestrantes.

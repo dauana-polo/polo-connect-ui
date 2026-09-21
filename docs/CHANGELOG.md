@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026-09-21] - Painel interno ampliado de palestrantes
+
+- Mantida a listagem e todo o cadastro já existente de palestrantes.
+- Criadas visualizações internas de perfil, mini bio, bio, foto, vídeo e temas informados pelo palestrante.
+- Adicionada prévia de permissões separadas para clientes visualizarem valor e agenda.
+- Criadas áreas de fotos/documentos e logística/rider técnico dentro do módulo de Palestrantes.
+- Nenhuma tabela, arquivo, permissão ou dado foi alterado; os novos controles e campos permanecem demonstrativos.
+
 ## [2026-09-21] - Fluxo comercial consolidado no CRM
 
 - Removido o acesso paralelo e a aba adicional do protótipo comercial.
