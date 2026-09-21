@@ -17,6 +17,7 @@ import { Can } from "@/components/shared/Can";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { usePermissions } from "@/hooks/usePermissions";
+import { CrmCommercialPrototype } from "@/components/crm/CrmCommercialPrototype";
 
 export const Route = createFileRoute("/app/crm")({ component: CRM });
 
@@ -184,7 +185,10 @@ function CRM() {
               </SelectContent>
             </Select>
           </div>
-          <Can resource="crm" action="edit"><NewLeadDialog /></Can>
+          <div className="flex flex-wrap gap-2">
+            <CrmCommercialPrototype />
+            <Can resource="crm" action="edit"><NewLeadDialog /></Can>
+          </div>
         </div>
 
         {isLoading && <LoadingState label="Carregando leads…" />}

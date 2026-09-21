@@ -14,6 +14,7 @@ import { SETORES, getSetor, type SetorKey } from "@/components/kanban/constants"
 import { KanbanCard, type KanbanCardData } from "@/components/kanban/KanbanCard";
 import { KanbanFilters, type Filtros, type Option } from "@/components/kanban/KanbanFilters";
 import { VendaDrawer } from "@/components/vendas/VendaDrawer";
+import { PostSalePrototype } from "@/components/kanban/PostSalePrototype";
 
 export const Route = createFileRoute("/app/kanban")({
   component: KanbanMulti,
@@ -140,6 +141,7 @@ function KanbanMulti() {
     <>
       <AppTopbar title="Kanban Multissetorial" breadcrumb={["Home", "Operação", "Kanban"]} />
       <div className="p-4 md:p-6 space-y-4">
+        {setor === "pos_venda" && <PostSalePrototype />}
         {/* Setor: tabs desktop, select mobile */}
         <div className="md:hidden">
           <Select value={setor} onValueChange={(v) => setSetor(v as SetorKey)}>
