@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-09-21] - Indicação de edição no painel de palestrantes
+
+- Substituída a indicação “Somente visualização” por “Editável pela equipe” nas áreas de fotos, logística e rider técnico.
+- Mantido o comportamento demonstrativo atual, sem mudança de dados ou permissões.
+
 ## [2026-09-21] - Painel interno ampliado de palestrantes
 
 - Mantida a listagem e todo o cadastro já existente de palestrantes.

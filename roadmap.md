@@ -12,3 +12,4 @@
 - [x] Integrar cliente e contato ao formulário de novo negócio e tratar recomendação/fechamento apenas como regras.
 - [x] Ampliar a visualização interna de Palestrantes com perfil, materiais, documentos, logística e rider técnico.
 - [x] Demonstrar liberações separadas para clientes visualizarem valor e agenda, sem alterar dados ou acessos reais.
+- [x] Identificar fotos, logística e rider técnico como informações editáveis pela equipe, mantendo a demonstração sem persistência.

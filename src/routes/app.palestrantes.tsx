@@ -341,7 +341,7 @@ function PalestrantesPage() {
                 <TabsContent value="materiais">
                   <div className="space-y-4">
                     <Card className="p-5">
-                      <div className="mb-4 flex items-center justify-between"><div><h4 className="font-semibold">Fotos enviadas</h4><p className="text-xs text-muted-foreground">Materiais visuais disponíveis no cadastro.</p></div><Badge variant="outline">Somente visualização</Badge></div>
+                      <div className="mb-4 flex items-center justify-between"><div><h4 className="font-semibold">Fotos enviadas</h4><p className="text-xs text-muted-foreground">Materiais visuais disponíveis no cadastro.</p></div><Badge variant="outline">Editável pela equipe</Badge></div>
                       {p.foto_url ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="overflow-hidden rounded-md border"><img src={p.foto_url} alt={`Material de ${p.nome}`} className="aspect-[4/3] w-full object-cover" /><div className="p-3 text-sm font-medium">Foto principal</div></div></div> : <EmptyPanel icon={<ImageIcon className="h-6 w-6" />} title="Nenhuma foto disponível" description="As fotos enviadas pelo palestrante aparecerão aqui." />}
                     </Card>
                     <Card className="p-5">
@@ -357,7 +357,7 @@ function PalestrantesPage() {
 
                 <TabsContent value="rider">
                   <Card className="p-5">
-                    <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h4 className="font-semibold">Informações de logística e rider técnico</h4><p className="mt-1 text-xs text-muted-foreground">Visão interna das preferências informadas pelo palestrante.</p></div><Badge variant="outline">Somente visualização</Badge></div>
+                    <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h4 className="font-semibold">Informações de logística e rider técnico</h4><p className="mt-1 text-xs text-muted-foreground">Visão interna das preferências informadas pelo palestrante.</p></div><Badge variant="outline">Editável pela equipe</Badge></div>
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                       <InfoPanel icon={<Plane />} title="Viagem" text="Preferências de companhia, horários e aeroporto: não informado." />
                       <InfoPanel icon={<Hotel />} title="Hospedagem" text="Categoria, quarto e necessidades de hospedagem: não informado." />

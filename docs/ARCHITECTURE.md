@@ -22,7 +22,7 @@ O Polo Connect usa TanStack Start, React 19, TanStack Router, TanStack Query, Ta
 - Cores e estados visuais usam tokens semânticos definidos em `src/styles.css`.
 - Os protótipos de Consulta/Negociação, fluxo comercial e dossiê pós-venda são visuais: não gravam novos campos ou documentos.
 - Cliente e contato integram a criação do negócio no CRM. Recomendação e fechamento permanecem nas ações existentes, com validações próprias, sem criar etapas paralelas.
-- O cadastro interno de palestrantes reúne, em uma única visualização, perfil, materiais, documentos, logística e rider técnico. As novas áreas e liberações para clientes são demonstrativas e não gravam dados.
+- O cadastro interno de palestrantes reúne, em uma única visualização, perfil, materiais, documentos, logística e rider técnico. As áreas de materiais e rider são identificadas como editáveis pela equipe; nesta fase, os novos campos e liberações para clientes continuam demonstrativos e não gravam dados.
 
 ## Autenticação
 

@@ -18,7 +18,7 @@
 - Anexos de NF, contrato, arquivos variados, QR Code, envolvidos, faturador e atividades com prazos são visuais e ainda não persistem.
 - Tudo que o palestrante fornecer para seu perfil deve ficar visível para a equipe interna, incluindo mini bio, fotos, vídeos e documentos.
 - A liberação de valor e agenda para clientes deve ser controlada separadamente; nesta entrega os controles são apenas uma prévia visual e não alteram a exposição pública.
-- Informações de logística e rider técnico pertencem ao módulo de Palestrantes; nesta entrega aparecem como campos internos demonstrativos e sem persistência.
+- Informações de logística e rider técnico pertencem ao módulo de Palestrantes e devem poder ser editadas pela equipe; nesta entrega, a indicação de edição é demonstrativa e ainda não persiste esses campos.
 
 ## Permissões na interface
 
