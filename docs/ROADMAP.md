@@ -13,6 +13,7 @@
 - Consulta/Negociação exclusiva para negociação de palestrantes.
 - Fluxo comercial visual no CRM: cliente/contatos, recomendação, proposta e fechamento obrigatório.
 - Visão geral do Pós-venda e dossiê com envolvidos, faturamento, documentos, QR Code e atividades.
+- Criação demonstrativa de novos funis no CRM, com ganho e perda acionados somente nos cartões dos negócios.
 
 ## Próximos passos pendentes
 

@@ -22,7 +22,6 @@ import {
 } from "@/lib/crm/constants";
 import { NewBusinessWizard } from "./NewBusinessWizard";
 import { GerarSugestaoPDF } from "./GerarSugestaoPDF";
-import { MarcarGanhoDialog } from "./MarcarGanhoDialog";
 import { Can } from "@/components/shared/Can";
 import { usePermissions } from "@/hooks/usePermissions";
 import { requiredString, optionalEmail, phoneSchema, isoDateSchema } from "@/lib/validators";
@@ -57,16 +56,6 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
   const moverEtapa = useMutation({
     mutationFn: async (etapa: Etapa) => {
       const payload: any = { etapa };
-      if (etapa === "perdido") {
-        const motivo = window.prompt("Motivo da perda?");
-        if (!motivo) throw new Error("Motivo obrigatório");
-        payload.motivo_perda = motivo;
-      }
-      if (etapa === "ganho") {
-        if (!window.confirm("Marcar como GANHO criará automaticamente a venda e os cards nos Kanbans operacionais. Continuar?")) {
-          throw new Error("Cancelado");
-        }
-      }
       const { error } = await supabase.from("leads").update(payload).eq("id", leadId!);
       if (error) throw error;
     },
@@ -102,7 +91,7 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
                 <Select value={lead.etapa} disabled={!canEdit} onValueChange={(v) => moverEtapa.mutate(v as Etapa)}>
                   <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {ETAPAS.map((e) => (
+                    {ETAPAS.filter((e) => !["ganho", "perdido"].includes(e.id)).map((e) => (
                       <SelectItem key={e.id} value={e.id}>{e.titulo}</SelectItem>
                     ))}
                   </SelectContent>
@@ -111,7 +100,6 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
               <Can resource="crm" action="edit">
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <NewBusinessWizard lead={lead} />
-                  {lead.etapa === "negociacao" && <MarcarGanhoDialog lead={lead} />}
                 </div>
               </Can>
             </SheetHeader>
